@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { useLoader } from "@react-three/fiber";
 import type { Project } from "@/lib/types";
 import ProjectDialog from "../ProjectDialog";
 import { useUpdateProjectTransform } from "@/lib/hooks/useProjects";
@@ -17,10 +17,21 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   const [hovered, setHovered] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const updateTransform = useUpdateProjectTransform();
+  const texture = useLoader(THREE.TextureLoader, project.image);
 
-  useFrame(() => {
+  useEffect(() => {
+    texture.encoding = THREE.sRGBEncoding;
+    texture.needsUpdate = true;
+  }, [texture]);
+
+  useFrame((state) => {
     if (meshRef.current && hovered) {
-      meshRef.current.rotation.y += 0.01;
+      // スムーズなホバーアニメーション
+      meshRef.current.rotation.y += Math.sin(state.clock.elapsedTime) * 0.01;
+      meshRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 2) * 0.05);
+    } else if (meshRef.current) {
+      // 元の状態に戻る
+      meshRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
     }
   });
 
@@ -51,29 +62,19 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         onClick={() => setDialogOpen(true)}
+        scale={1}
       >
-        <boxGeometry args={[1, 1.5, 0.1]} />
+        <boxGeometry args={[2, 3, 0.1]} />
         <meshStandardMaterial
-          color={hovered ? "#ffffff" : "#888888"}
-          metalness={0.5}
-          roughness={0.5}
-        />
-        
-        <Html
-          transform
-          position={[0, 0, 0.06]}
-          className="pointer-events-none"
-          center
+          map={texture}
+          color={hovered ? "#ffffff" : "#dddddd"}
+          metalness={0.3}
+          roughness={0.7}
+          transparent
+          opacity={0.95}
         >
-          <div className="w-32 h-48 bg-black/80 rounded p-2 text-white">
-            <img
-              src={project.image}
-              alt={project.title}
-              className="w-full h-24 object-cover rounded"
-            />
-            <h3 className="text-sm font-bold mt-2">{project.title}</h3>
-          </div>
-        </Html>
+          <primitive attach="map" object={texture} />
+        </meshStandardMaterial>
       </mesh>
 
       <ProjectDialog
