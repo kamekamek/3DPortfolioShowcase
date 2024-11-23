@@ -4,6 +4,7 @@ import { Html } from "@react-three/drei";
 import type { Project } from "@/lib/types";
 import ProjectDialog from "../ProjectDialog";
 import { useUpdateProjectTransform } from "@/lib/hooks/useProjects";
+import * as THREE from "three";
 
 interface ProjectCardProps {
   project: Project;
