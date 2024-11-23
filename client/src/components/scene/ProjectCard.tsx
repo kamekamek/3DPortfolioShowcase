@@ -17,22 +17,31 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   const [hovered, setHovered] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const updateTransform = useUpdateProjectTransform();
+  const targetScale = useRef(new THREE.Vector3(1, 1, 1));
+  const targetRotation = useRef(new THREE.Euler());
   const texture = useLoader(THREE.TextureLoader, project.image);
 
   useEffect(() => {
-    texture.encoding = THREE.sRGBEncoding;
+    texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
   }, [texture]);
 
-  useFrame((state) => {
-    if (meshRef.current && hovered) {
-      // スムーズなホバーアニメーション
-      meshRef.current.rotation.y += Math.sin(state.clock.elapsedTime) * 0.01;
-      meshRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 2) * 0.05);
-    } else if (meshRef.current) {
-      // 元の状態に戻る
-      meshRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+  useFrame((state, delta) => {
+    if (!meshRef.current) return;
+
+    if (hovered) {
+      // ホバー時のアニメーション
+      targetScale.current.setScalar(1.1);
+      targetRotation.current.y += delta * 0.5;
+    } else {
+      // 通常状態
+      targetScale.current.setScalar(1);
+      targetRotation.current.y = rotation[1];
     }
+
+    // スムーズな補間
+    meshRef.current.scale.lerp(targetScale.current, 0.1);
+    meshRef.current.rotation.y += (targetRotation.current.y - meshRef.current.rotation.y) * 0.1;
   });
 
   const handleDragEnd = () => {
@@ -62,7 +71,6 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         onClick={() => setDialogOpen(true)}
-        scale={1}
       >
         <boxGeometry args={[2, 3, 0.1]} />
         <meshStandardMaterial
@@ -70,11 +78,7 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
           color={hovered ? "#ffffff" : "#dddddd"}
           metalness={0.3}
           roughness={0.7}
-          transparent
-          opacity={0.95}
-        >
-          <primitive attach="map" object={texture} />
-        </meshStandardMaterial>
+        />
       </mesh>
 
       <ProjectDialog
