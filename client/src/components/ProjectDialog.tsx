@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,9 @@ export default function ProjectDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{project.title}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {project.description}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4">
@@ -33,10 +37,6 @@ export default function ProjectDialog({
             alt={project.title}
             className="w-full aspect-video object-cover rounded-lg"
           />
-          
-          <p className="text-sm text-muted-foreground">
-            {project.description}
-          </p>
           
           <div className="flex flex-wrap gap-2">
             {project.technologies.map((tech) => (
