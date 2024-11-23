@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, Suspense } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import ProjectCard from "./ProjectCard";
@@ -56,18 +56,20 @@ export default function Scene() {
 
       <gridHelper args={[20, 20, "#303030", "#202020"]} />
 
-      {projects.map((project, index) => {
-        const position = calculatePosition(index, projects.length);
-        const rotation = calculateRotation(position);
-        return (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            position={position}
-            rotation={rotation}
-          />
-        );
-      })}
+      <Suspense fallback={null}>
+        {projects.map((project, index) => {
+          const position = calculatePosition(index, projects.length);
+          const rotation = calculateRotation(position);
+          return (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              position={position}
+              rotation={rotation}
+            />
+          );
+        })}
+      </Suspense>
     </>
   );
 }

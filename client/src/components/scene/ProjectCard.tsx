@@ -63,29 +63,30 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   };
 
   return (
-    <group>
-      <mesh
-        ref={meshRef}
-        position={position}
-        rotation={rotation}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        onClick={() => setDialogOpen(true)}
-      >
-        <boxGeometry args={[2, 3, 0.1]} />
-        <meshStandardMaterial
-          map={texture}
-          color={hovered ? "#ffffff" : "#dddddd"}
-          metalness={0.3}
-          roughness={0.7}
-        />
-      </mesh>
-
+    <>
+      <group>
+        <mesh
+          ref={meshRef}
+          position={position}
+          rotation={rotation}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+          onClick={() => setDialogOpen(true)}
+        >
+          <boxGeometry args={[2, 3, 0.1]} />
+          <meshStandardMaterial
+            map={texture}
+            color={hovered ? "#ffffff" : "#dddddd"}
+            metalness={0.3}
+            roughness={0.7}
+          />
+        </mesh>
+      </group>
       <ProjectDialog
         project={project}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />
-    </group>
+    </>
   );
 }
