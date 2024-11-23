@@ -3,7 +3,7 @@ import { db } from "../db";
 import { projects } from "@db/schema";
 import { eq } from "drizzle-orm";
 
-export function registerRoutes(app: Express) {
+export function setupRoutes(app: Express) {
   // Get all projects
   app.get("/api/projects", async (req, res) => {
     try {
@@ -48,6 +48,16 @@ export function registerRoutes(app: Express) {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to update project transform" });
+    }
+  });
+
+  // Create new project
+  app.post("/api/projects", async (req, res) => {
+    try {
+      const result = await db.insert(projects).values(req.body).returning();
+      res.status(201).json(result[0]);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create project" });
     }
   });
 }
