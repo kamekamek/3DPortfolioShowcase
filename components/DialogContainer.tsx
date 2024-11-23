@@ -24,13 +24,13 @@ export default function DialogContainer() {
             <DialogTitle className="text-2xl font-bold">
               {selectedProject.title}
             </DialogTitle>
-            <DialogDescription className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {selectedProject.technologies.map((tech) => (
                 <Badge key={tech} variant="secondary">
                   {tech}
                 </Badge>
               ))}
-            </DialogDescription>
+            </div>
           </DialogHeader>
 
           <div className="relative aspect-video rounded-lg overflow-hidden">
