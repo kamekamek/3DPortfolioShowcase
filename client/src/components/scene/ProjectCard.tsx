@@ -2,8 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
 import type { Project } from "@/lib/types";
-import ProjectDialog from "../ProjectDialog";
 import { useUpdateProjectTransform } from "@/lib/hooks/useProjects";
+import { useProjectStore } from "@/lib/store";
 import * as THREE from "three";
 
 interface ProjectCardProps {
@@ -15,8 +15,8 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, position, rotation }: ProjectCardProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const updateTransform = useUpdateProjectTransform();
+  const setSelectedProject = useProjectStore(state => state.setSelectedProject);
   const targetScale = useRef(new THREE.Vector3(1, 1, 1));
   const targetRotation = useRef(new THREE.Euler());
   const texture = useLoader(THREE.TextureLoader, project.image);
@@ -30,16 +30,13 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
     if (!meshRef.current) return;
 
     if (hovered) {
-      // ホバー時のアニメーション
       targetScale.current.setScalar(1.1);
       targetRotation.current.y += delta * 0.5;
     } else {
-      // 通常状態
       targetScale.current.setScalar(1);
       targetRotation.current.y = rotation[1];
     }
 
-    // スムーズな補間
     meshRef.current.scale.lerp(targetScale.current, 0.1);
     meshRef.current.rotation.y += (targetRotation.current.y - meshRef.current.rotation.y) * 0.1;
   });
@@ -63,30 +60,21 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   };
 
   return (
-    <>
-      <group>
-        <mesh
-          ref={meshRef}
-          position={position}
-          rotation={rotation}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-          onClick={() => setDialogOpen(true)}
-        >
-          <boxGeometry args={[2, 3, 0.1]} />
-          <meshStandardMaterial
-            map={texture}
-            color={hovered ? "#ffffff" : "#dddddd"}
-            metalness={0.3}
-            roughness={0.7}
-          />
-        </mesh>
-      </group>
-      <ProjectDialog
-        project={project}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+    <mesh
+      ref={meshRef}
+      position={position}
+      rotation={rotation}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+      onClick={() => setSelectedProject(project)}
+    >
+      <boxGeometry args={[2, 3, 0.1]} />
+      <meshStandardMaterial
+        map={texture}
+        color={hovered ? "#ffffff" : "#dddddd"}
+        metalness={0.3}
+        roughness={0.7}
       />
-    </>
+    </mesh>
   );
 }

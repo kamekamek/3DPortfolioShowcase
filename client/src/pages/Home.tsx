@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import Scene from "@/components/scene/Scene";
 import Navigation from "@/components/Navigation";
+import DialogContainer from "@/components/DialogContainer";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       >
         <Scene />
       </Canvas>
+      <DialogContainer />
     </div>
   );
 }
