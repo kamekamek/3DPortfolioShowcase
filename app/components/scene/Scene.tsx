@@ -1,14 +1,29 @@
+"use client";
+
 import React, { useRef, useEffect, Suspense } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Environment } from "@react-three/drei";
 import ProjectCard from "./ProjectCard";
-import { useProjects } from "@/lib/hooks/useProjects";
+import { useProjects } from "@/app/lib/hooks/useProjects";
 import * as THREE from "three";
+import { useToast } from "@/app/components/ui/use-toast";
 
 export default function Scene() {
   const { camera } = useThree();
   const controlsRef = useRef<any>();
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isError, error } = useProjects();
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    if (isError) {
+      toast({
+        title: "Error",
+        description: "Failed to load projects. Please try again later.",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  }, [isError, error, toast]);
 
   useEffect(() => {
     if (camera) {
@@ -38,8 +53,13 @@ export default function Scene() {
     return [0, angle, 0] as [number, number, number];
   };
 
+  if (isError) {
+    return null;
+  }
+
   return (
     <>
+      <Environment preset="city" />
       <PerspectiveCamera makeDefault position={[0, 3, 8]} fov={75} />
       <OrbitControls
         ref={controlsRef}
@@ -50,9 +70,19 @@ export default function Scene() {
         maxPolarAngle={Math.PI / 2}
       />
       
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <hemisphereLight intensity={0.3} />
+      <ambientLight intensity={0.8} />
+      <directionalLight 
+        position={[10, 10, 5]} 
+        intensity={1.5}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+      />
+      <spotLight
+        position={[-10, 10, -5]}
+        intensity={0.5}
+        angle={0.5}
+        penumbra={1}
+      />
 
       <gridHelper args={[20, 20, "#303030", "#202020"]} />
 

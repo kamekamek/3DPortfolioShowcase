@@ -26,6 +26,10 @@ author = "agent"
 task = "workflow.run"
 args = "3D Portfolio"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Insert Sample Data"
+
 [[workflows.workflow]]
 name = "3D Portfolio"
 author = "agent"
@@ -40,3 +44,17 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Insert Sample Data"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "tsx scripts/insert-sample-projects.ts"

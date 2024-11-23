@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
-import type { Project } from "@/lib/types";
-import { useUpdateProjectTransform } from "@/lib/hooks/useProjects";
-import { useProjectStore } from "@/lib/store";
+import type { Project } from "@/app/lib/types";
+import { useUpdateProjectTransform } from "@/app/lib/hooks/useProjects";
+import { useProjectStore } from "@/app/lib/store";
 import * as THREE from "three";
 
 // アニメーション定数
@@ -21,7 +21,7 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const updateTransform = useUpdateProjectTransform();
-  const setSelectedProject = useProjectStore(state => state.setSelectedProject);
+  const setSelectedProject = useProjectStore((state: { setSelectedProject: (project: Project | null) => void }) => state.setSelectedProject);
   const targetScale = useRef(new THREE.Vector3(1, 1, 1));
   const targetRotation = useRef(new THREE.Euler());
   const texture = useLoader(THREE.TextureLoader, project.image);
