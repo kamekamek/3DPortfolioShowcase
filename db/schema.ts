@@ -26,7 +26,7 @@ export const projects = pgTable("projects", {
 export const reviews = pgTable("reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id),
-  userId: uuid("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id).notNull().defaultRandom(), // 一時的な対応
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").defaultNow(),

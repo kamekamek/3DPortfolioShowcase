@@ -187,12 +187,12 @@ export function setupRoutes(app: Express) {
           projectId: req.params.id,
           rating,
           comment,
-          userId: "anonymous", // 認証実装後に実際のユーザーIDを使用
         })
         .returning();
       res.status(201).json(review);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create review" });
+      console.error("Failed to create review:", error);
+      res.status(500).json({ error: "レビューの作成に失敗しました" });
     }
   });
 }
