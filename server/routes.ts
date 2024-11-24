@@ -163,4 +163,36 @@ export function setupRoutes(app: Express) {
       res.status(500).json({ error: "Failed to delete project" });
     }
   });
+
+  // Get project reviews
+  app.get("/api/projects/:id/reviews", async (req, res) => {
+    try {
+      const projectReviews = await db
+        .select()
+        .from(reviews)
+        .where(eq(reviews.projectId, req.params.id));
+      res.json(projectReviews);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  // Create project review
+  app.post("/api/projects/:id/reviews", async (req, res) => {
+    try {
+      const { rating, comment } = req.body;
+      const [review] = await db
+        .insert(reviews)
+        .values({
+          projectId: req.params.id,
+          rating,
+          comment,
+          userId: "anonymous", // 認証実装後に実際のユーザーIDを使用
+        })
+        .returning();
+      res.status(201).json(review);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create review" });
+    }
+  });
 }
