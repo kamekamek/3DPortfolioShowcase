@@ -1,17 +1,27 @@
 import { pgTable, text, uuid, timestamp, varchar, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 
+// Supabase Authと連携するユーザーテーブル
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey().default(sql`auth.uid()`),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  passwordHash: varchar("password_hash").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // RLSポリシー: ユーザーは自分のデータのみ参照可能
+    rls_select: sql`auth.uid() = ${table.id}`,
+    rls_insert: sql`auth.uid() = ${table.id}`,
+    rls_update: sql`auth.uid() = ${table.id}`,
+    rls_delete: sql`auth.uid() = ${table.id}`,
+  };
 });
 
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   image: text("image").notNull(),
@@ -21,15 +31,31 @@ export const projects = pgTable("projects", {
   rotation: text("rotation").notNull().default("[0,0,0]"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    // RLSポリシー: 読み取りは全員可能、作成・更新・削除は所有者のみ
+    rls_select: sql`true`,
+    rls_insert: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId}`,
+    rls_delete: sql`auth.uid() = ${table.userId}`,
+  };
 });
 
 export const reviews = pgTable("reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id),
-  userId: uuid("user_id").references(() => users.id).notNull().defaultRandom(), // 一時的な対応
+  userId: uuid("user_id").references(() => users.id).notNull().default(sql`auth.uid()`),
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // RLSポリシー: 読み取りは全員可能、作成は認証済みユーザー、更新・削除は所有者のみ
+    rls_select: sql`true`,
+    rls_insert: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId}`,
+    rls_delete: sql`auth.uid() = ${table.userId}`,
+  };
 });
 
 // Review schemas
@@ -42,7 +68,6 @@ export type Review = z.infer<typeof selectReviewSchema>;
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email(),
   name: z.string().min(2),
-  passwordHash: z.string(),
 });
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;

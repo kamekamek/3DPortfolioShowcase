@@ -2,7 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
 import { projects, reviews, loginSchema, registerSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { createUser, findUserByEmail, comparePasswords, generateToken, verifyToken } from "./auth";
+import { createUser, findUserByEmail, verifyToken } from "./auth";
+import { supabase } from "../client/src/lib/supabase";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -38,9 +39,11 @@ export function setupRoutes(app: Express) {
       }
 
       const user = await createUser(name, email, password);
-      const token = generateToken(user);
-      
-      res.status(201).json({ user, token });
+      const { data: authData } = await supabase.auth.getSession();
+      res.status(201).json({ 
+        user, 
+        token: authData?.session?.access_token 
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -50,18 +53,24 @@ export function setupRoutes(app: Express) {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
+      }
+
       const user = await findUserByEmail(email);
       if (!user) {
-        return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
+        return res.status(401).json({ message: "ユーザーが見つかりません" });
       }
 
-      const isValid = await comparePasswords(password, user.passwordHash);
-      if (!isValid) {
-        return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
-      }
-
-      const token = generateToken(user);
-      res.json({ user, token });
+      res.json({ 
+        user,
+        token: authData.session?.access_token 
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
