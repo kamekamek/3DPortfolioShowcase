@@ -1,9 +1,71 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import { projects } from "@db/schema";
+import { projects, loginSchema, registerSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { createUser, findUserByEmail, comparePasswords, generateToken, verifyToken } from "./auth";
+
+interface AuthRequest extends Request {
+  user?: any;
+}
+
+// 認証ミドルウェア
+async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "認証が必要です" });
+  }
+
+  const user = await verifyToken(token);
+  if (!user) {
+    return res.status(403).json({ message: "無効なトークンです" });
+  }
+
+  req.user = user;
+  next();
+}
 
 export function setupRoutes(app: Express) {
+  // 認証関連のエンドポイント
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { name, email, password } = registerSchema.parse(req.body);
+      
+      const existingUser = await findUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "このメールアドレスは既に登録されています" });
+      }
+
+      const user = await createUser(name, email, password);
+      const token = generateToken(user);
+      
+      res.status(201).json({ user, token });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      
+      const user = await findUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
+      }
+
+      const isValid = await comparePasswords(password, user.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ message: "メールアドレスまたはパスワードが正しくありません" });
+      }
+
+      const token = generateToken(user);
+      res.json({ user, token });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
   // Get all projects
   app.get("/api/projects", async (req, res) => {
     try {
