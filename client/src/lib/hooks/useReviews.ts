@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { Review } from "@db/schema";
+export type { Review };
 
 interface CreateReviewData {
   projectId: string;

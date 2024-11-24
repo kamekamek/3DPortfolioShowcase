@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, varchar, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -27,7 +27,7 @@ export const reviews = pgTable("reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id),
   userId: uuid("user_id").references(() => users.id),
-  rating: text("rating").notNull(),
+  rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

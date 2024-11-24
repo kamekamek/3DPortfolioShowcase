@@ -1,4 +1,4 @@
-import type { Review } from "@/lib/hooks/useReviews";
+import type { Review } from "@db/schema";
 
 interface ReviewListProps {
   reviews: Review[];
@@ -11,12 +11,12 @@ export default function ReviewList({ reviews }: ReviewListProps) {
         <p className="text-muted-foreground">まだレビューはありません</p>
       ) : (
         reviews.map((review) => (
-          <div key={review.id} className="border-t pt-4">
+          <div key={review.id as string} className="border-t pt-4">
             <div className="flex items-center gap-2">
-              <span className="text-yellow-500">{"★".repeat(review.rating)}</span>
-              <span className="text-gray-500">{"☆".repeat(5 - review.rating)}</span>
+              <span className="text-yellow-500">{"★".repeat(review.rating as number)}</span>
+              <span className="text-gray-500">{"☆".repeat(5 - (review.rating as number))}</span>
             </div>
-            <p className="text-sm mt-2">{review.comment}</p>
+            <p className="text-sm mt-2">{review.comment as string}</p>
           </div>
         ))
       )}
