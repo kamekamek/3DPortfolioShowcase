@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import { projects, loginSchema, registerSchema } from "@db/schema";
+import { projects, reviews, loginSchema, registerSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { createUser, findUserByEmail, comparePasswords, generateToken, verifyToken } from "./auth";
 

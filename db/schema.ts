@@ -32,6 +32,12 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Review schemas
+export const insertReviewSchema = createInsertSchema(reviews);
+export const selectReviewSchema = createSelectSchema(reviews);
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = z.infer<typeof selectReviewSchema>;
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email(),
