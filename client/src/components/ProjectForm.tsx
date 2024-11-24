@@ -21,7 +21,7 @@ const formSchema = z.object({
   image: z.string().url("有効なURLを入力してください"),
   link: z.string().url("有効なURLを入力してください").optional(),
   technologies: z.string().transform((str) => 
-    str ? str.split(",").map((s) => s.trim()) : []
+    str ? str.split(",").map((s) => s.trim()).filter(Boolean) : []
   ),
 });
 
@@ -40,7 +40,7 @@ export default function ProjectForm({ onSubmit, initialData }: ProjectFormProps)
       description: initialData?.description || "",
       image: initialData?.image || "",
       link: initialData?.link || "",
-      technologies: initialData?.technologies?.join(", ") || "",
+      technologies: initialData?.technologies || [],  // 空の配列をデフォルト値に
     },
   });
 

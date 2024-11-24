@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -15,12 +16,11 @@ export const projects = pgTable("projects", {
   description: text("description").notNull(),
   image: text("image").notNull(),
   link: text("link"),
-  technologies: text("technologies").array(),
+  technologies: text("technologies").array().default([]),
   position: text("position").notNull().default("[0,0,0]"),
   rotation: text("rotation").notNull().default("[0,0,0]"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  userId: uuid("user_id").references(() => users.id),
 });
 
 export const reviews = pgTable("reviews", {
@@ -35,7 +35,8 @@ export const reviews = pgTable("reviews", {
 // User schemas
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email(),
-  password: z.string().min(6),
+  name: z.string().min(2),
+  passwordHash: z.string(),
 });
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;

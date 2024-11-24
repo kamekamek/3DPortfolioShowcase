@@ -26,7 +26,7 @@ export function generateToken(user: User): string {
 
 export async function verifyToken(token: string): Promise<User | null> {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     const [user] = await db
       .select()
       .from(users)
@@ -40,9 +40,10 @@ export async function verifyToken(token: string): Promise<User | null> {
 }
 
 export async function createUser(name: string, email: string, password: string): Promise<User> {
+  const passwordHash = await hashPassword(password);
   const [user] = await db
     .insert(users)
-    .values({ name, email })
+    .values({ name, email, passwordHash })
     .returning();
   return user;
 }

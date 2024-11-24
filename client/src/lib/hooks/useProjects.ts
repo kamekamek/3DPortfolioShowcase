@@ -21,7 +21,7 @@ export function useUpdateProjectTransform() {
       position,
       rotation,
     }: {
-      id: number;
+      id: string;
       position: [number, number, number];
       rotation: [number, number, number];
     }) => {
