@@ -69,22 +69,24 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   };
 
   return (
-    <mesh
-      ref={meshRef}
-      position={position}
-      rotation={rotation}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-      onClick={() => setSelectedProject(project)}
-    >
-      <boxGeometry args={[2, 3, 0.1]} />
-      <meshStandardMaterial
-        map={texture}
-        color={hovered ? "#ffffff" : "#dddddd"}
-        metalness={0.2}  // より自然な見た目
-        roughness={0.8}  // よりマットな質感
-        envMapIntensity={0.5}  // 環境マッピングの強度調整
-      />
-    </mesh>
+    <group>
+      <mesh
+        ref={meshRef}
+        position={position}
+        rotation={rotation}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        onClick={() => setSelectedProject(project)}
+      >
+        <boxGeometry args={[2, 3, 0.1]} />
+        <meshStandardMaterial
+          map={texture}
+          color={hovered ? "#ffffff" : "#dddddd"}
+          metalness={0.2}
+          roughness={0.8}
+          envMapIntensity={0.5}
+        />
+      </mesh>
+    </group>
   );
 }
