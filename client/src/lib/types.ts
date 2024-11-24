@@ -1,5 +1,5 @@
 export interface Project {
-  id: number;
+  id: string;  // UUIDを使用するためstringに変更
   title: string;
   description: string;
   image: string;

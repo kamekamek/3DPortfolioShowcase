@@ -72,6 +72,7 @@ export function setupRoutes(app: Express) {
       const allProjects = await db.select().from(projects);
       res.json(allProjects);
     } catch (error) {
+      console.error("Error fetching projects:", error);
       res.status(500).json({ error: "Failed to fetch projects" });
     }
   });
@@ -82,7 +83,7 @@ export function setupRoutes(app: Express) {
       const project = await db
         .select()
         .from(projects)
-        .where(eq(projects.id, parseInt(req.params.id)))
+        .where(eq(projects.id, req.params.id))
         .limit(1);
       
       if (project.length === 0) {
@@ -92,6 +93,7 @@ export function setupRoutes(app: Express) {
       
       res.json(project[0]);
     } catch (error) {
+      console.error("Error fetching project:", error);
       res.status(500).json({ error: "Failed to fetch project" });
     }
   });
