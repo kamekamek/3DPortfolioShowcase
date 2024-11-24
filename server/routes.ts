@@ -124,4 +124,43 @@ export function setupRoutes(app: Express) {
       res.status(500).json({ error: "Failed to create project" });
     }
   });
+
+  // Update project
+  app.put("/api/projects/:id", async (req, res) => {
+    try {
+      const result = await db
+        .update(projects)
+        .set(req.body)
+        .where(eq(projects.id, req.params.id))
+        .returning();
+      
+      if (result.length === 0) {
+        res.status(404).json({ error: "Project not found" });
+        return;
+      }
+      
+      res.json(result[0]);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update project" });
+    }
+  });
+
+  // Delete project
+  app.delete("/api/projects/:id", async (req, res) => {
+    try {
+      const result = await db
+        .delete(projects)
+        .where(eq(projects.id, req.params.id))
+        .returning();
+      
+      if (result.length === 0) {
+        res.status(404).json({ error: "Project not found" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete project" });
+    }
+  });
 }

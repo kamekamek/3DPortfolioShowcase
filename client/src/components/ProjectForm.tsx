@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { insertProjectSchema } from "@db/schema";
+import { useToast } from "@/hooks/use-toast";
+import type { Project } from "@/lib/types";
 
 // フォームのスキーマを定義
 const formSchema = z.object({
@@ -28,11 +29,13 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface ProjectFormProps {
-  onSubmit: (data: FormData) => void;
-  initialData?: Partial<FormData>;
+  onSubmit: (data: FormData) => Promise<void>;
+  initialData?: Partial<Project>;
+  isSubmitting?: boolean;
 }
 
-export default function ProjectForm({ onSubmit, initialData }: ProjectFormProps) {
+export default function ProjectForm({ onSubmit, initialData, isSubmitting }: ProjectFormProps) {
+  const { toast } = useToast();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,7 +49,21 @@ export default function ProjectForm({ onSubmit, initialData }: ProjectFormProps)
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(async (data) => {
+        try {
+          await onSubmit(data);
+          toast({
+            title: "成功",
+            description: "プロジェクトが保存されました",
+          });
+        } catch (error) {
+          toast({
+            title: "エラー",
+            description: "プロジェクトの保存に失敗しました",
+            variant: "destructive",
+          });
+        }
+      })} className="space-y-4">
         <FormField
           control={form.control}
           name="title"

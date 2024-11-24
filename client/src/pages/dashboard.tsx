@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useProjects } from "@/lib/hooks/useProjects";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,12 +23,65 @@ export default function Dashboard() {
   const { data: projects = [] } = useProjects();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const createProject = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create project");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setIsDialogOpen(false);
+    },
+  });
+
+  const updateProject = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update project");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setIsDialogOpen(false);
+      setEditingProject(null);
+    },
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete project");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast({
+        title: "削除完了",
+        description: "プロジェクトが削除されました",
+      });
+    },
+  });
 
   const handleSubmit = async (data: any) => {
-    // TODO: プロジェクトの保存処理を実装
-    console.log(data);
-    setIsDialogOpen(false);
-    setEditingProject(null);
+    if (editingProject) {
+      await updateProject.mutateAsync({ id: editingProject.id, data });
+    } else {
+      await createProject.mutateAsync(data);
+    }
   };
 
   return (
@@ -58,7 +113,15 @@ export default function Dashboard() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="destructive" size="icon">
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm("このプロジェクトを削除してもよろしいですか？")) {
+                        deleteProject.mutate(project.id);
+                      }
+                    }}
+                  >
                     <Trash className="h-4 w-4" />
                   </Button>
                 </div>
@@ -95,6 +158,7 @@ export default function Dashboard() {
           <ProjectForm
             onSubmit={handleSubmit}
             initialData={editingProject}
+            isSubmitting={createProject.isPending || updateProject.isPending}
           />
         </DialogContent>
       </Dialog>
