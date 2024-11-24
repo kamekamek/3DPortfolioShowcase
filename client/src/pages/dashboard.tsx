@@ -16,7 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Edit, Trash } from "lucide-react";
+import { ArrowLeft, Plus, Edit, Trash } from "lucide-react";
+import { Link } from "wouter";
 import ProjectForm from "@/components/ProjectForm";
 
 export default function Dashboard() {
@@ -87,7 +88,15 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">プロジェクト管理</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              ギャラリーに戻る
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">プロジェクト管理</h1>
+        </div>
         <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> 新規プロジェクト
         </Button>
