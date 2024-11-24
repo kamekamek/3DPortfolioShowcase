@@ -7,9 +7,10 @@ import { useProjectStore } from "@/lib/store";
 import * as THREE from "three";
 
 // アニメーション定数
-const HOVER_SCALE = 1.05;  // より控えめなスケール
-const ROTATION_SPEED = 0.3; // より遅い回転
-const LERP_FACTOR = 0.15;  // よりスムーズな遷移
+const HOVER_SCALE = 1.08;  // スケールを少し大きく
+const ROTATION_SPEED = 0.2; // 回転速度を調整
+const LERP_FACTOR = 0.1;   // よりスムーズな遷移
+const GLOW_INTENSITY = 0.5; // グローエフェクトの強度
 
 interface ProjectCardProps {
   project: Project;
@@ -90,12 +91,16 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
         onClick={() => setSelectedProject(project)}
       >
         <boxGeometry args={[2, 3, 0.1]} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           map={texture}
           color={hovered ? "#ffffff" : "#dddddd"}
-          metalness={0.2}
-          roughness={0.8}
-          envMapIntensity={0.5}
+          metalness={0.4}
+          roughness={0.6}
+          clearcoat={0.5}
+          clearcoatRoughness={0.3}
+          envMapIntensity={hovered ? 1.2 : 0.8}
+          emissive={hovered ? "#404040" : "#000000"}
+          emissiveIntensity={hovered ? GLOW_INTENSITY : 0}
         />
       </mesh>
     </group>

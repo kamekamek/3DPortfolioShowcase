@@ -57,15 +57,23 @@ export default function Scene() {
       <OrbitControls
         ref={controlsRef}
         enableDamping
-        dampingFactor={0.05}
+        dampingFactor={0.08}
         minDistance={5}
         maxDistance={15}
         maxPolarAngle={Math.PI / 2}
+        rotateSpeed={0.8}
       />
       
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <hemisphereLight intensity={0.3} />
+      <fog attach="fog" args={["#202020", 5, 25]} />
+      <ambientLight intensity={0.3} />
+      <directionalLight 
+        position={[10, 10, 5]} 
+        intensity={0.8}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+      />
+      <hemisphereLight intensity={0.2} />
 
       <gridHelper args={[20, 20, "#303030", "#202020"]} />
 
