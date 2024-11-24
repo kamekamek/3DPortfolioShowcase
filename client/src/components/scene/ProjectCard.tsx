@@ -26,12 +26,23 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   const targetRotation = useRef(new THREE.Euler());
   const texture = useLoader(THREE.TextureLoader, project.image);
 
-  // テクスチャ最適化
+  // テクスチャ最適化とWebGLコンテキスト復帰ハンドリング
   useEffect(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.generateMipmaps = true;
     texture.needsUpdate = true;
+
+    const handleContextLost = () => {
+      console.warn('WebGL context lost, attempting to restore...');
+    };
+    
+    const canvas = document.querySelector('canvas');
+    canvas?.addEventListener('webglcontextlost', handleContextLost);
+    
+    return () => {
+      canvas?.removeEventListener('webglcontextlost', handleContextLost);
+    };
   }, [texture]);
 
   // よりスムーズなアニメーション

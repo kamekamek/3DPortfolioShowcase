@@ -1,6 +1,6 @@
-import { useRef, useEffect, Suspense } from "react";
+import { useRef, useEffect, Suspense, useState } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Html } from "@react-three/drei";
 import ProjectCard from "./ProjectCard";
 import { useProjects } from "@/lib/hooks/useProjects";
 import * as THREE from "three";
@@ -9,6 +9,13 @@ export default function Scene() {
   const { camera } = useThree();
   const controlsRef = useRef<any>();
   const { data: projects = [] } = useProjects();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      setIsLoading(false);
+    }
+  }, [projects]);
 
   useEffect(() => {
     if (camera) {
@@ -37,6 +44,12 @@ export default function Scene() {
     const angle = Math.atan2(position[0], position[2]);
     return [0, angle, 0] as [number, number, number];
   };
+
+  if (isLoading) {
+    return <Html center>
+      <div className="text-white">Loading projects...</div>
+    </Html>;
+  }
 
   return (
     <>
