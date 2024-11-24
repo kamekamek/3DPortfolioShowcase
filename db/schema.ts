@@ -1,33 +1,41 @@
-import { pgTable, text, integer, timestamp, serial, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   image: text("image").notNull(),
   link: text("link"),
   technologies: text("technologies").array(),
-  position: text("position").notNull().default("[0,0,0]"), // JSON string for x,y,z coordinates
-  rotation: text("rotation").notNull().default("[0,0,0]"), // JSON string for x,y,z rotation
+  position: text("position").notNull().default("[0,0,0]"),
+  rotation: text("rotation").notNull().default("[0,0,0]"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  userId: integer("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id),
+});
+
+export const reviews = pgTable("reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id),
+  userId: uuid("user_id").references(() => users.id),
+  rating: text("rating").notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // User schemas
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email(),
-  passwordHash: z.string().min(6),
+  password: z.string().min(6),
 });
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;

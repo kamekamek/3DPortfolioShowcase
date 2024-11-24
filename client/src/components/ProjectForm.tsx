@@ -20,7 +20,9 @@ const formSchema = z.object({
   description: z.string().min(1, "説明は必須です"),
   image: z.string().url("有効なURLを入力してください"),
   link: z.string().url("有効なURLを入力してください").optional(),
-  technologies: z.string().transform((str) => str.split(",").map((s) => s.trim())),
+  technologies: z.string().transform((str) => 
+    str ? str.split(",").map((s) => s.trim()) : []
+  ),
 });
 
 type FormData = z.infer<typeof formSchema>;

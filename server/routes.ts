@@ -106,7 +106,7 @@ export function setupRoutes(app: Express) {
           position: JSON.stringify(position),
           rotation: JSON.stringify(rotation)
         })
-        .where(eq(projects.id, parseInt(req.params.id)));
+        .where(eq(projects.id, req.params.id));
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to update project transform" });

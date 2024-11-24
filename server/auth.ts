@@ -40,10 +40,9 @@ export async function verifyToken(token: string): Promise<User | null> {
 }
 
 export async function createUser(name: string, email: string, password: string): Promise<User> {
-  const passwordHash = await hashPassword(password);
   const [user] = await db
     .insert(users)
-    .values({ name, email, passwordHash })
+    .values({ name, email })
     .returning();
   return user;
 }
