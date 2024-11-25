@@ -1,4 +1,19 @@
-import { supabase } from "../client/src/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  throw new Error('Supabase credentials are required');
+}
+
+const supabase = createClient(
+  `https://${process.env.SUPABASE_URL}`,
+  process.env.SUPABASE_ANON_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+    },
+  }
+);
 import { db } from "../db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";

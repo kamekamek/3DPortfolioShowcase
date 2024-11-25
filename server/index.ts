@@ -1,4 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { config } from 'dotenv';
+config();  // .envファイルを読み込む
+
 import { setupRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";

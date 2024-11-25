@@ -82,27 +82,30 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
 
   return (
     <group>
-      <mesh
-        ref={meshRef}
+      <group
         position={position}
         rotation={rotation}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        onClick={() => setSelectedProject(project)}
       >
-        <boxGeometry args={[2, 3, 0.1]} />
-        <meshPhysicalMaterial
-          map={texture}
-          color={hovered ? "#ffffff" : "#dddddd"}
-          metalness={0.4}
-          roughness={0.6}
-          clearcoat={0.5}
-          clearcoatRoughness={0.3}
-          envMapIntensity={hovered ? 1.2 : 0.8}
-          emissive={hovered ? "#404040" : "#000000"}
-          emissiveIntensity={hovered ? GLOW_INTENSITY : 0}
-        />
-      </mesh>
+        <mesh
+          ref={meshRef}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+          onClick={() => setSelectedProject(project)}
+        >
+          <boxGeometry args={[2, 3, 0.1]} />
+          <meshPhysicalMaterial
+            map={texture}
+            color={hovered ? "#ffffff" : "#dddddd"}
+            metalness={0.4}
+            roughness={0.6}
+            clearcoat={0.5}
+            clearcoatRoughness={0.3}
+            envMapIntensity={hovered ? 1.2 : 0.8}
+            emissive={hovered ? "#404040" : "#000000"}
+            emissiveIntensity={hovered ? GLOW_INTENSITY : 0}
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
