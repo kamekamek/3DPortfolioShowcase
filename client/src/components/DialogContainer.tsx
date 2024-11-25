@@ -5,8 +5,8 @@ export default function DialogContainer() {
   const { selectedProject, setSelectedProject } = useProjectStore();
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
-      <div className="pointer-events-auto w-full h-full flex items-center justify-center">
+    <div className="fixed inset-0 pointer-events-none">
+      <div className="pointer-events-auto">
         {selectedProject && (
           <ProjectDialog
             project={selectedProject}

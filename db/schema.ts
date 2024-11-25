@@ -9,10 +9,19 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
+}, (table) => {
+  return {
+    // RLSポリシー: ユーザーは自分のデータのみ参照可能
+    rls_select: sql`auth.uid() = ${table.id}`,
+    rls_insert: sql`auth.uid() = ${table.id}`,
+    rls_update: sql`auth.uid() = ${table.id}`,
+    rls_delete: sql`auth.uid() = ${table.id}`,
+  };
 });
 
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   image: text("image").notNull(),
@@ -22,15 +31,31 @@ export const projects = pgTable("projects", {
   rotation: text("rotation").notNull().default("[0,0,0]"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    // RLSポリシー: 読み取りは全員可能、作成・更新・削除は所有者のみ
+    rls_select: sql`true`,
+    rls_insert: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId}`,
+    rls_delete: sql`auth.uid() = ${table.userId}`,
+  };
 });
 
 export const reviews = pgTable("reviews", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").references(() => projects.id),
+  userId: uuid("user_id").references(() => users.id).notNull().default(sql`auth.uid()`),
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  // user_idカラムは後で追加する場合は、マイグレーションを使用して安全に追加します
+}, (table) => {
+  return {
+    // RLSポリシー: 読み取りは全員可能、作成は認証済みユーザー、更新・削除は所有者のみ
+    rls_select: sql`true`,
+    rls_insert: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId}`,
+    rls_delete: sql`auth.uid() = ${table.userId}`,
+  };
 });
 
 // Review schemas
