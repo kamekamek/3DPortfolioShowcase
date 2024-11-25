@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { setupRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
+import dotenv from "dotenv";
+dotenv.config({ path: "./server/.env" });
 import { createServer } from "http";
 
 function log(message: string) {

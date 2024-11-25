@@ -1,4 +1,13 @@
-import { supabase } from "../client/src/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase credentials are missing');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 import { db } from "../db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";

@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 
 // Supabase Authと連携するユーザーテーブル
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().default(sql`auth.uid()`),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -21,7 +21,7 @@ export const users = pgTable("users", {
 
 export const projects = pgTable("projects", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id),
+  userId: uuid("user_id").references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   image: text("image").notNull(),
