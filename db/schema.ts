@@ -30,6 +30,7 @@ export const reviews = pgTable("reviews", {
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  // user_idカラムは後で追加する場合は、マイグレーションを使用して安全に追加します
 });
 
 // Review schemas

@@ -1,23 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
-
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-  throw new Error('Supabase credentials are required');
-}
-
-const supabase = createClient(
-  `https://${process.env.SUPABASE_URL}`,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-    },
-  }
-);
 import { db } from "../db";
 import { users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import type { User } from "@db/schema";
+
+// 環境変数の検証
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY');
+}
+
+// Supabaseクライアントの初期化
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing required environment variables: SUPABASE_URL and SUPABASE_ANON_KEY');
+}
+
+// URLをバリデーション
+try {
+  new URL(supabaseUrl);
+} catch (error) {
+  throw new Error('Invalid SUPABASE_URL');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function createUser(name: string, email: string, password: string): Promise<User> {
   const { data: authData, error: authError } = await supabase.auth.signUp({
