@@ -22,6 +22,27 @@ export default function Scene() {
       camera.position.set(0, 3, 8);
       camera.lookAt(0, 0, 0);
     }
+
+    // WebGLコンテキストの設定
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const gl = canvas.getContext('webgl2', {
+        powerPreference: 'high-performance',
+        antialias: true,
+        alpha: false,
+        stencil: false
+      });
+      
+      // コンテキスト復帰のハンドリング
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        console.warn('WebGL context lost, attempting to restore...');
+      });
+      
+      canvas.addEventListener('webglcontextrestored', () => {
+        console.log('WebGL context restored');
+      });
+    }
   }, [camera]);
 
   useFrame(() => {

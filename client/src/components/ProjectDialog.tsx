@@ -75,12 +75,12 @@ export default function ProjectDialog({
               <h3 className="font-semibold mb-2">技術スタック</h3>
               <div className="flex flex-wrap gap-2">
                 {project.technologies.map((tech) => (
-                  <span
+                  <div
                     key={tech}
                     className="px-2 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
                   >
                     {tech}
-                  </span>
+                  </div>
                 ))}
               </div>
             </div>

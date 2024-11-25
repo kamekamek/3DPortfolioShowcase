@@ -25,7 +25,9 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
   const setSelectedProject = useProjectStore(state => state.setSelectedProject);
   const targetScale = useRef(new THREE.Vector3(1, 1, 1));
   const targetRotation = useRef(new THREE.Euler());
-  const texture = useLoader(THREE.TextureLoader, project.image);
+  const texture = useLoader(THREE.TextureLoader, project.image, (loader) => {
+    loader.setCrossOrigin('anonymous');
+  });
 
   // テクスチャ最適化とWebGLコンテキスト復帰ハンドリング
   useEffect(() => {
@@ -33,17 +35,6 @@ export default function ProjectCard({ project, position, rotation }: ProjectCard
     texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.generateMipmaps = true;
     texture.needsUpdate = true;
-
-    const handleContextLost = () => {
-      console.warn('WebGL context lost, attempting to restore...');
-    };
-    
-    const canvas = document.querySelector('canvas');
-    canvas?.addEventListener('webglcontextlost', handleContextLost);
-    
-    return () => {
-      canvas?.removeEventListener('webglcontextlost', handleContextLost);
-    };
   }, [texture]);
 
   // よりスムーズなアニメーション
