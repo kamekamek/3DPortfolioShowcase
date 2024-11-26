@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { User } from "@db/schema";
+import dotenv from 'dotenv';
+import path from 'path';
+
+// .envファイルを読み込む（絶対パスで指定）
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;

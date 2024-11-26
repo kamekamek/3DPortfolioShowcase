@@ -2,6 +2,11 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { loginSchema, registerSchema } from "@db/schema";
 import { createUser, findUserByEmail, verifyToken } from "./auth";
 import { supabase } from "../client/src/lib/supabase";
+import dotenv from 'dotenv';
+import path from 'path';
+
+// .envファイルを読み込む（絶対パスで指定）
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 interface AuthRequest extends Request {
   user?: any;
