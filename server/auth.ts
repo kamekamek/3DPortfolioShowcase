@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import type { User } from "@db/schema";
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // .envファイルを読み込む（絶対パスで指定）
 dotenv.config({ path: path.resolve(__dirname, '../.env') });

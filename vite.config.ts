@@ -5,7 +5,6 @@ import path from "path";
 import checker from "vite-plugin-checker";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal"
 
-const __dirname = import.meta.dirname;
 export default defineConfig({
   plugins: [
     react(),
@@ -15,11 +14,11 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "client", "src"),
-      "@db": path.resolve(__dirname, "db"),
+      "@": path.resolve(__dirname, "client/src"),
     },
   },
   root: path.resolve(__dirname, "client"),
+  envDir: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,

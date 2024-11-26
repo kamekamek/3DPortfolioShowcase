@@ -1,0 +1,166 @@
+main:
+  root:
+    .gitignore:
+      content: |-
+        Git管理除外設定
+        除外対象:
+        - node_modules
+        - dist
+        - .DS_Store
+        - server/public
+        - vite config
+        - env files
+      dependency: []
+    .replit:
+      content: |-
+        Replit設定ファイル
+        設定:
+        - Node.js 20
+        - PostgreSQL 16
+        - Web
+        デプロイ:
+        - Cloud Run対応
+        - ポート5000使用
+      dependency: []
+    .env:
+      content: |-
+        環境変数設定
+        設定項目:
+        - VITE_SUPABASE_URL: Supabase プロジェクトURL
+        - VITE_SUPABASE_ANON_KEY: Supabase 匿名キー
+      dependency: []
+    client:
+      src:
+        lib:
+          supabase.ts:
+            content: |-
+              Supabaseクライアント設定
+              外部依存:
+              - @supabase/supabase-js
+              機能:
+              - Supabaseクライアントの初期化
+              - 環境変数の読み込み
+            dependency: []
+          auth:
+            auth.ts:
+              content: |-
+                認証関連の処理
+                外部依存:
+                - @supabase/supabase-js
+                機能:
+                - ユーザー認証
+                - セッション管理
+              dependency:
+                - client/src/lib/supabase.ts
+          hooks:
+            useProjects.ts:
+              content: |-
+                プロジェクト関連のカスタムフック
+                外部依存:
+                - @supabase/supabase-js
+                - @tanstack/react-query
+                機能:
+                - プロジェクトのCRUD操作
+              dependency:
+                - client/src/lib/supabase.ts
+            useReviews.ts:
+              content: |-
+                レビュー関連のカスタムフック
+                外部依存:
+                - @supabase/supabase-js
+                - @tanstack/react-query
+                機能:
+                - レビューのCRUD操作
+              dependency:
+                - client/src/lib/supabase.ts
+        components:
+          # ... (既存のコンポーネント定義は変更なし)
+    server:
+      auth.ts:
+        content: |-
+          認証関連の処理
+          外部依存:
+          - @supabase/supabase-js
+          - dotenv
+          機能:
+          - ユーザー登録
+          - ログイン認証
+          - トークン検証
+        dependency:
+          - server/db/index.ts
+      routes.ts:
+        content: |-
+          APIルート定義
+          外部依存:
+          - express
+          - @supabase/supabase-js
+          - dotenv
+          機能:
+          - 認証エンドポイント
+          - プロジェクト操作API
+          - レビュー操作API
+        dependency:
+          - server/auth.ts
+          - server/db/index.ts
+    db:
+      schema.sql:
+        content: |-
+          データベーススキーマ定義
+          テーブル:
+          - users (id, name, email, created_at)
+          - projects (id, user_id, title, description, image, link, technologies, created_at)
+          - reviews (id, project_id, user_id, rating, comment, created_at)
+        dependency: []
+      index.ts:
+        content: |-
+          データベース接続設定
+          外部依存:
+          - @supabase/supabase-js
+          - dotenv
+          機能:
+          - Supabaseクライアントの初期化
+          - データベース操作のエクスポート
+        dependency: []
+
+changes:
+  - type: modify
+    file: 3DPortfolioShowcase/.env
+    description: "環境変数の追加とVITEプレフィックスの追加"
+    details:
+      - "SUPABASE_URL → VITE_SUPABASE_URL"
+      - "SUPABASE_ANON_KEY → VITE_SUPABASE_ANON_KEY"
+
+  - type: modify
+    file: 3DPortfolioShowcase/db/schema.sql
+    description: "usersテーブルからpasswordフィールドを削除"
+    details:
+      - "Supabase Authを使用するため、パスワード管理をSupabaseに移行"
+
+  - type: modify
+    file: 3DPortfolioShowcase/server/auth.ts
+    description: "Supabaseクライアントを使用するように修正"
+    details:
+      - "環境変数名の修正（VITE_プレフィックス追加）"
+      - "drizzle-ormからSupabaseクエリビルダーに移行"
+      - "dotenvを追加して環境変数を読み込み"
+
+  - type: modify
+    file: 3DPortfolioShowcase/db/index.ts
+    description: "データベースクライアントの変更"
+    details:
+      - "drizzle-ormからSupabaseクライアントに移行"
+      - "dotenvを追加して環境変数を読み込み"
+
+  - type: modify
+    file: 3DPortfolioShowcase/server/routes.ts
+    description: "APIエンドポイントの修正"
+    details:
+      - "drizzle-ormからSupabaseクエリビルダーに移行"
+      - "プロジェクトとレビューのエンドポイントをSupabase対応に修正"
+      - "dotenvを追加して環境変数を読み込み"
+
+  - type: modify
+    file: 3DPortfolioShowcase/package.json
+    description: "依存関係の追加"
+    details:
+      - "dotenvパッケージを追加"
