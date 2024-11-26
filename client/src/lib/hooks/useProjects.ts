@@ -30,9 +30,14 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt" | "creator_name">) => {
+      // 現在のユーザーのIDを取得
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("ユーザーが認証されていません");
+
       // データベースのカラム名に合わせてデータを変換
       const dbData = {
         ...data,
+        user_id: user.id,  // user_idを設定
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -45,11 +50,20 @@ export function useCreateProject() {
 
       if (error) throw error;
 
+      // projects_with_usersビューから最新のデータを取得
+      const { data: projectWithUser, error: viewError } = await supabase
+        .from("projects_with_users")
+        .select("*")
+        .eq("id", project.id)
+        .single();
+
+      if (viewError) throw viewError;
+
       // レスポンスをTypeScriptの型に合わせて変換
       return {
-        ...project,
-        createdAt: project.created_at,
-        updatedAt: project.updated_at,
+        ...projectWithUser,
+        createdAt: projectWithUser.created_at,
+        updatedAt: projectWithUser.updated_at,
       } as Project;
     },
     onSuccess: () => {
@@ -84,11 +98,20 @@ export function useUpdateProject() {
 
       if (error) throw error;
 
+      // projects_with_usersビューから最新のデータを取得
+      const { data: projectWithUser, error: viewError } = await supabase
+        .from("projects_with_users")
+        .select("*")
+        .eq("id", project.id)
+        .single();
+
+      if (viewError) throw viewError;
+
       // レスポンスをTypeScriptの型に合わせて変換
       return {
-        ...project,
-        createdAt: project.created_at,
-        updatedAt: project.updated_at,
+        ...projectWithUser,
+        createdAt: projectWithUser.created_at,
+        updatedAt: projectWithUser.updated_at,
       } as Project;
     },
     onSuccess: () => {
@@ -137,10 +160,19 @@ export function useUpdateProjectTransform() {
 
       if (error) throw error;
 
+      // projects_with_usersビューから最新のデータを取得
+      const { data: projectWithUser, error: viewError } = await supabase
+        .from("projects_with_users")
+        .select("*")
+        .eq("id", project.id)
+        .single();
+
+      if (viewError) throw viewError;
+
       return {
-        ...project,
-        createdAt: project.created_at,
-        updatedAt: project.updated_at,
+        ...projectWithUser,
+        createdAt: projectWithUser.created_at,
+        updatedAt: projectWithUser.updated_at,
       } as Project;
     },
     onSuccess: () => {

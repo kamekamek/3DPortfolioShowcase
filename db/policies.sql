@@ -1,3 +1,17 @@
+-- 既存のポリシーを削除
+DROP POLICY IF EXISTS "プロジェクトの閲覧を許可" ON projects;
+DROP POLICY IF EXISTS "認証済みユーザーのプロジェクト作成を許可" ON projects;
+DROP POLICY IF EXISTS "プロジェクトの更新を許可" ON projects;
+DROP POLICY IF EXISTS "プロジェクトの削除を許可" ON projects;
+DROP POLICY IF EXISTS "レビューの閲覧を許可" ON reviews;
+DROP POLICY IF EXISTS "認証済みユーザーのレビュー作成を許可" ON reviews;
+DROP POLICY IF EXISTS "レビューの更新を許可" ON reviews;
+DROP POLICY IF EXISTS "レビューの削除を許可" ON reviews;
+DROP POLICY IF EXISTS "ユーザーの基本情報の閲覧を許可" ON users;
+DROP POLICY IF EXISTS "認証済みユーザーの登録を許可" ON users;
+DROP POLICY IF EXISTS "ユーザーの更新を許可" ON users;
+DROP POLICY IF EXISTS "ユーザーの削除を許可" ON users;
+
 -- プロジェクトテーブルのポリシー
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
@@ -8,7 +22,10 @@ CREATE POLICY "プロジェクトの閲覧を許可" ON projects
 -- 認証済みユーザーのみ作成可能
 CREATE POLICY "認証済みユーザーのプロジェクト作成を許可" ON projects
   FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+  WITH CHECK (
+    auth.uid() IS NOT NULL AND
+    auth.uid() = user_id
+  );
 
 -- 管理者は全てのプロジェクトを更新可能、一般ユーザーは自分のプロジェクトのみ更新可能
 CREATE POLICY "プロジェクトの更新を許可" ON projects
@@ -16,15 +33,8 @@ CREATE POLICY "プロジェクトの更新を許可" ON projects
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = projects.user_id)
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = projects.user_id)
+      WHERE id = auth.uid() AND
+      (is_admin = true OR id = projects.user_id)
     )
   );
 
@@ -34,8 +44,8 @@ CREATE POLICY "プロジェクトの削除を許可" ON projects
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = projects.user_id)
+      WHERE id = auth.uid() AND
+      (is_admin = true OR id = projects.user_id)
     )
   );
 
@@ -49,7 +59,10 @@ CREATE POLICY "レビューの閲覧を許可" ON reviews
 -- 認証済みユーザーのみ作成可能
 CREATE POLICY "認証済みユーザーのレビュー作成を許可" ON reviews
   FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+  WITH CHECK (
+    auth.uid() IS NOT NULL AND
+    auth.uid() = user_id
+  );
 
 -- 管理者は全てのレビューを更新可能、一般ユーザーは自分のレビューのみ更新可能
 CREATE POLICY "レビューの更新を許可" ON reviews
@@ -57,15 +70,8 @@ CREATE POLICY "レビューの更新を許可" ON reviews
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = reviews.user_id)
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = reviews.user_id)
+      WHERE id = auth.uid() AND
+      (is_admin = true OR id = reviews.user_id)
     )
   );
 
@@ -75,8 +81,8 @@ CREATE POLICY "レビューの削除を許可" ON reviews
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = reviews.user_id)
+      WHERE id = auth.uid() AND
+      (is_admin = true OR id = reviews.user_id)
     )
   );
 
@@ -99,15 +105,8 @@ CREATE POLICY "ユーザーの更新を許可" ON users
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = users.id)
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND (is_admin = true OR id = users.id)
+      WHERE id = auth.uid() AND
+      (is_admin = true OR id = users.id)
     )
   );
 
@@ -117,7 +116,7 @@ CREATE POLICY "ユーザーの削除を許可" ON users
   USING (
     EXISTS (
       SELECT 1 FROM users
-      WHERE id = auth.uid()
-      AND is_admin = true
+      WHERE id = auth.uid() AND
+      is_admin = true
     )
   );

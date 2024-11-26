@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "projects" (
     "description" text NOT NULL,
     "image" text NOT NULL,
     "link" text,
-    "technologies" text[] DEFAULT '{}',
+    "technologies" text NOT NULL,  -- 配列から文字列に変更
     "position" numeric(10,6)[] DEFAULT ARRAY[0, 0, 0],
     "rotation" numeric(10,6)[] DEFAULT ARRAY[0, 0, 0],
     "created_at" timestamp DEFAULT now(),
@@ -76,3 +76,8 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_new_user();
+
+-- 既存のテーブルのtechnologiesカラムを変更
+ALTER TABLE projects 
+    ALTER COLUMN technologies TYPE text,
+    ALTER COLUMN technologies SET NOT NULL;
