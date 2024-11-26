@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS "reviews" (
     "created_at" timestamp DEFAULT now()
 );
 
+-- プロジェクト情報とユーザー名を結合したビューの作成
+CREATE OR REPLACE VIEW "projects_with_users" WITH (security_barrier) AS
+SELECT 
+    p.*,
+    u.name as creator_name
+FROM 
+    projects p
+    JOIN users u ON p.user_id = u.id
+WITH CHECK OPTION;
+
 -- トリガーの作成: プロジェクトの更新時にupdated_atを自動更新
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

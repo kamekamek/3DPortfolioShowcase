@@ -7,7 +7,7 @@ export function useProjects() {
     queryKey: ["projects"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("projects")
+        .from("projects_with_users")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -29,7 +29,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
+    mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt" | "creator_name">) => {
       // データベースのカラム名に合わせてデータを変換
       const dbData = {
         ...data,
@@ -67,7 +67,7 @@ export function useUpdateProject() {
       data,
     }: {
       id: string;
-      data: Partial<Omit<Project, "id" | "createdAt" | "updatedAt">>;
+      data: Partial<Omit<Project, "id" | "createdAt" | "updatedAt" | "creator_name">>;
     }) => {
       // データベースのカラム名に合わせてデータを変換
       const dbData = {

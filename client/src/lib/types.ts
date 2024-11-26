@@ -9,4 +9,5 @@ export interface Project {
   rotation: [number, number, number];
   createdAt: string;
   updatedAt: string;
+  creator_name: string;  // 作成者の名前を追加
 }
