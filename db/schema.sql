@@ -1,9 +1,13 @@
+-- 既存のテーブル定義
 CREATE TABLE IF NOT EXISTS "users" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "name" varchar(255) NOT NULL,
     "email" varchar(255) NOT NULL UNIQUE,
     "created_at" timestamp DEFAULT now()
 );
+
+-- is_adminカラムの追加
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_admin" boolean DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS "projects" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -46,11 +50,12 @@ CREATE TRIGGER update_projects_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.users (id, name, email)
+    INSERT INTO public.users (id, name, email, is_admin)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'name', 'Anonymous'),
-        NEW.email
+        NEW.email,
+        false
     );
     RETURN NEW;
 END;

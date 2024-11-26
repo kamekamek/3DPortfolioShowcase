@@ -8,18 +8,36 @@ CREATE POLICY "プロジェクトの閲覧を許可" ON projects
 -- 認証済みユーザーのみ作成可能
 CREATE POLICY "認証済みユーザーのプロジェクト作成を許可" ON projects
   FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() IS NOT NULL);
 
--- 自分のプロジェクトのみ更新可能
-CREATE POLICY "自分のプロジェクトの更新を許可" ON projects
+-- 管理者は全てのプロジェクトを更新可能、一般ユーザーは自分のプロジェクトのみ更新可能
+CREATE POLICY "プロジェクトの更新を許可" ON projects
   FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = projects.user_id)
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = projects.user_id)
+    )
+  );
 
--- 自分のプロジェクトのみ削除可能
-CREATE POLICY "自分のプロジェクトの削除を許可" ON projects
+-- 管理者は全てのプロジェクトを削除可能、一般ユーザーは自分のプロジェクトのみ削除可能
+CREATE POLICY "プロジェクトの削除を許可" ON projects
   FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = projects.user_id)
+    )
+  );
 
 -- レビューテーブルのポリシー
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
@@ -31,18 +49,36 @@ CREATE POLICY "レビューの閲覧を許可" ON reviews
 -- 認証済みユーザーのみ作成可能
 CREATE POLICY "認証済みユーザーのレビュー作成を許可" ON reviews
   FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() IS NOT NULL);
 
--- 自分のレビューのみ更新可能
-CREATE POLICY "自分のレビューの更新を許可" ON reviews
+-- 管理者は全てのレビューを更新可能、一般ユーザーは自分のレビューのみ更新可能
+CREATE POLICY "レビューの更新を許可" ON reviews
   FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = reviews.user_id)
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = reviews.user_id)
+    )
+  );
 
--- 自分のレビューのみ削除可能
-CREATE POLICY "自分のレビューの削除を許可" ON reviews
+-- 管理者は全てのレビューを削除可能、一般ユーザーは自分のレビューのみ削除可能
+CREATE POLICY "レビューの削除を許可" ON reviews
   FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = reviews.user_id)
+    )
+  );
 
 -- ユーザーテーブルのポリシー
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -57,13 +93,31 @@ CREATE POLICY "認証済みユーザーの登録を許可" ON users
   FOR INSERT
   WITH CHECK (auth.uid() = id);
 
--- 自分のプロフィールのみ更新可能
-CREATE POLICY "自分のプロフィールの更新を許可" ON users
+-- 管理者は全てのユーザーを更新可能、一般ユーザーは自分のプロフィールのみ更新可能
+CREATE POLICY "ユーザーの更新を許可" ON users
   FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = users.id)
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND (is_admin = true OR id = users.id)
+    )
+  );
 
--- 自分のプロフィールのみ削除可能
-CREATE POLICY "自分のプロフィールの削除を許可" ON users
+-- 管理者のみユーザーの削除が可能
+CREATE POLICY "ユーザーの削除を許可" ON users
   FOR DELETE
-  USING (auth.uid() = id);
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND is_admin = true
+    )
+  );
