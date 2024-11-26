@@ -1,7 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { db } from "../db";
-import { projects, reviews, loginSchema, registerSchema } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { loginSchema, registerSchema } from "@db/schema";
 import { createUser, findUserByEmail, verifyToken } from "./auth";
 import { supabase } from "../client/src/lib/supabase";
 
@@ -75,133 +73,83 @@ export function setupRoutes(app: Express) {
       res.status(400).json({ message: error.message });
     }
   });
-  // Get all projects
+
+  // プロジェクト関連のエンドポイント
   app.get("/api/projects", async (req, res) => {
     try {
-      const allProjects = await db.select().from(projects);
-      res.json(allProjects);
+      const { data: projects, error } = await supabase
+        .from('projects')
+        .select('*');
+
+      if (error) throw error;
+      res.json(projects);
     } catch (error) {
       console.error("Error fetching projects:", error);
       res.status(500).json({ error: "Failed to fetch projects" });
     }
   });
 
-  // Get single project
-  app.get("/api/projects/:id", async (req, res) => {
+  // プロジェクト作成
+  app.post("/api/projects", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const project = await db
-        .select()
-        .from(projects)
-        .where(eq(projects.id, req.params.id))
-        .limit(1);
-      
-      if (project.length === 0) {
-        res.status(404).json({ error: "Project not found" });
-        return;
-      }
-      
-      res.json(project[0]);
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      res.status(500).json({ error: "Failed to fetch project" });
-    }
-  });
-
-  // Update project position/rotation
-  app.patch("/api/projects/:id/transform", async (req, res) => {
-    const { position, rotation } = req.body;
-    try {
-      await db
-        .update(projects)
-        .set({ 
-          position: JSON.stringify(position),
-          rotation: JSON.stringify(rotation)
+      const { title, description, image, link, technologies } = req.body;
+      const { data: project, error } = await supabase
+        .from('projects')
+        .insert({
+          user_id: req.user.id,
+          title,
+          description,
+          image,
+          link,
+          technologies
         })
-        .where(eq(projects.id, req.params.id));
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update project transform" });
-    }
-  });
+        .select()
+        .single();
 
-  // Create new project
-  app.post("/api/projects", async (req, res) => {
-    try {
-      const result = await db.insert(projects).values(req.body).returning();
-      res.status(201).json(result[0]);
+      if (error) throw error;
+      res.status(201).json(project);
     } catch (error) {
+      console.error("Error creating project:", error);
       res.status(500).json({ error: "Failed to create project" });
     }
   });
 
-  // Update project
-  app.put("/api/projects/:id", async (req, res) => {
-    try {
-      const result = await db
-        .update(projects)
-        .set(req.body)
-        .where(eq(projects.id, req.params.id))
-        .returning();
-      
-      if (result.length === 0) {
-        res.status(404).json({ error: "Project not found" });
-        return;
-      }
-      
-      res.json(result[0]);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update project" });
-    }
-  });
-
-  // Delete project
-  app.delete("/api/projects/:id", async (req, res) => {
-    try {
-      const result = await db
-        .delete(projects)
-        .where(eq(projects.id, req.params.id))
-        .returning();
-      
-      if (result.length === 0) {
-        res.status(404).json({ error: "Project not found" });
-        return;
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete project" });
-    }
-  });
-
-  // Get project reviews
-  app.get("/api/projects/:id/reviews", async (req, res) => {
-    try {
-      const projectReviews = await db
-        .select()
-        .from(reviews)
-        .where(eq(reviews.projectId, req.params.id));
-      res.json(projectReviews);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch reviews" });
-    }
-  });
-
-  // Create project review
-  app.post("/api/projects/:id/reviews", async (req, res) => {
+  // レビュー関連のエンドポイント
+  app.post("/api/projects/:projectId/reviews", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { rating, comment } = req.body;
-      const [review] = await db
-        .insert(reviews)
-        .values({
-          projectId: req.params.id,
+      const { data: review, error } = await supabase
+        .from('reviews')
+        .insert({
+          project_id: req.params.projectId,
+          user_id: req.user.id,
           rating,
-          comment,
+          comment
         })
-        .returning();
+        .select()
+        .single();
+
+      if (error) throw error;
       res.status(201).json(review);
     } catch (error) {
-      console.error("Failed to create review:", error);
-      res.status(500).json({ error: "レビューの作成に失敗しました" });
+      console.error("Error creating review:", error);
+      res.status(500).json({ error: "Failed to create review" });
+    }
+  });
+
+  // プロジェクトのレビュー取得
+  app.get("/api/projects/:projectId/reviews", async (req, res) => {
+    try {
+      const { data: reviews, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('project_id', req.params.projectId);
+
+      if (error) throw error;
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
     }
   });
 }
