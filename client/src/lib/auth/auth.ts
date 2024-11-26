@@ -1,14 +1,5 @@
+import { supabase } from "../supabase";
 import { z } from "zod";
-import type { User } from "@db/schema";
-
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
-
-export interface AuthError {
-  message: string;
-}
 
 export const loginSchema = z.object({
   email: z.string().email("正しいメールアドレスを入力してください"),
@@ -21,44 +12,53 @@ export const registerSchema = z.object({
   password: z.string().min(6, "パスワードは6文字以上である必要があります"),
 });
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+export async function login({ email, password }: LoginInput) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "ログインに失敗しました");
+  if (error) {
+    throw new Error(error.message);
   }
 
-  return response.json();
+  return data;
 }
 
-export async function register(name: string, email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }),
+export async function register({ email, password, name }: RegisterInput) {
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+      },
+    },
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "登録に失敗しました");
+  if (authError) {
+    throw new Error(authError.message);
   }
 
-  return response.json();
+  return authData;
 }
 
-export function setAuthToken(token: string): void {
-  localStorage.setItem("authToken", token);
+export async function logout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
-export function getAuthToken(): string | null {
-  return localStorage.getItem("authToken");
+export function getSession() {
+  return supabase.auth.getSession();
 }
 
-export function removeAuthToken(): void {
-  localStorage.removeItem("authToken");
+export function onAuthStateChange(callback: (session: any) => void) {
+  return supabase.auth.onAuthStateChange((event, session) => {
+    callback(session);
+  });
 }

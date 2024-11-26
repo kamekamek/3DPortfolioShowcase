@@ -47,12 +47,25 @@ main:
                 認証関連の処理
                 外部依存:
                 - @supabase/supabase-js
+                - zod
                 機能:
-                - ユーザー認証
+                - ログイン/登録スキーマ定義
+                - ユーザー認証処理
                 - セッション管理
               dependency:
                 - client/src/lib/supabase.ts
           hooks:
+            useAuth.ts:
+              content: |-
+                認証関連のカスタムフック
+                外部依存:
+                - @supabase/supabase-js
+                - react
+                機能:
+                - 認証状態の管理
+                - ログイン/登録/ログアウト処理
+              dependency:
+                - client/src/lib/auth/auth.ts
             useProjects.ts:
               content: |-
                 プロジェクト関連のカスタムフック
@@ -74,7 +87,45 @@ main:
               dependency:
                 - client/src/lib/supabase.ts
         components:
-          # ... (既存のコンポーネント定義は変更なし)
+          auth:
+            LoginForm.tsx:
+              content: |-
+                ログインフォームコンポーネント
+                外部依存:
+                - react-hook-form
+                - @hookform/resolvers/zod
+                機能:
+                - ログインフォームの表示
+                - バリデーション
+                - ログイン処理
+              dependency:
+                - client/src/lib/auth/auth.ts
+                - client/src/hooks/useAuth.ts
+            RegisterForm.tsx:
+              content: |-
+                登録フォームコンポーネント
+                外部依存:
+                - react-hook-form
+                - @hookform/resolvers/zod
+                機能:
+                - 登録フォームの表示
+                - バリデーション
+                - ユーザー登録処理
+              dependency:
+                - client/src/lib/auth/auth.ts
+                - client/src/hooks/useAuth.ts
+        pages:
+          auth.tsx:
+            content: |-
+              認証ページ
+              機能:
+              - ログイン/登録フォームの切り替え
+              - 認証状態に基づくリダイレクト
+            dependency:
+              - client/src/components/auth/LoginForm.tsx
+              - client/src/components/auth/RegisterForm.tsx
+              - client/src/hooks/useAuth.ts
+          # ... (既存のページ定義は変更なし)
     server:
       auth.ts:
         content: |-
@@ -123,44 +174,54 @@ main:
         dependency: []
 
 changes:
-  - type: modify
-    file: 3DPortfolioShowcase/.env
-    description: "環境変数の追加とVITEプレフィックスの追加"
+  - type: add
+    file: 3DPortfolioShowcase/client/src/lib/auth/auth.ts
+    description: "Supabase認証機能の実装"
     details:
-      - "SUPABASE_URL → VITE_SUPABASE_URL"
-      - "SUPABASE_ANON_KEY → VITE_SUPABASE_ANON_KEY"
+      - "ログイン/登録スキーマの定義"
+      - "認証関連の関数実装"
+
+  - type: add
+    file: 3DPortfolioShowcase/client/src/hooks/useAuth.ts
+    description: "認証状態管理用カスタムフック"
+    details:
+      - "セッション管理"
+      - "ログイン/登録/ログアウト処理"
+
+  - type: add
+    file: 3DPortfolioShowcase/client/src/components/auth/LoginForm.tsx
+    description: "ログインフォームコンポーネント"
+    details:
+      - "フォームのUI実装"
+      - "バリデーション"
+      - "ログイン処理"
+
+  - type: add
+    file: 3DPortfolioShowcase/client/src/components/auth/RegisterForm.tsx
+    description: "登録フォームコンポーネント"
+    details:
+      - "フォームのUI実装"
+      - "バリデーション"
+      - "登録処理"
+
+  - type: add
+    file: 3DPortfolioShowcase/client/src/pages/auth.tsx
+    description: "認証ページの追加"
+    details:
+      - "ログイン/登録フォームの切り替え機能"
+      - "認証状態に基づくリダイレクト"
 
   - type: modify
-    file: 3DPortfolioShowcase/db/schema.sql
-    description: "usersテーブルからpasswordフィールドを削除"
+    file: 3DPortfolioShowcase/client/src/main.tsx
+    description: "ルーティングの更新"
     details:
-      - "Supabase Authを使用するため、パスワード管理をSupabaseに移行"
+      - "認証ページの追加"
+      - "PrivateRouteコンポーネントの実装"
 
   - type: modify
-    file: 3DPortfolioShowcase/server/auth.ts
-    description: "Supabaseクライアントを使用するように修正"
+    file: 3DPortfolioShowcase/client/src/pages/dashboard.tsx
+    description: "ダッシュボードの更新"
     details:
-      - "環境変数名の修正（VITE_プレフィックス追加）"
-      - "drizzle-ormからSupabaseクエリビルダーに移行"
-      - "dotenvを追加して環境変数を読み込み"
-
-  - type: modify
-    file: 3DPortfolioShowcase/db/index.ts
-    description: "データベースクライアントの変更"
-    details:
-      - "drizzle-ormからSupabaseクライアントに移行"
-      - "dotenvを追加して環境変数を読み込み"
-
-  - type: modify
-    file: 3DPortfolioShowcase/server/routes.ts
-    description: "APIエンドポイントの修正"
-    details:
-      - "drizzle-ormからSupabaseクエリビルダーに移行"
-      - "プロジェクトとレビューのエンドポイントをSupabase対応に修正"
-      - "dotenvを追加して環境変数を読み込み"
-
-  - type: modify
-    file: 3DPortfolioShowcase/package.json
-    description: "依存関係の追加"
-    details:
-      - "dotenvパッケージを追加"
+      - "Supabaseを使用したCRUD操作"
+      - "認証状態の統合"
+      - "ログアウト機能の追加"
