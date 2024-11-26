@@ -43,3 +43,27 @@ CREATE POLICY "自分のレビューの更新を許可" ON reviews
 CREATE POLICY "自分のレビューの削除を許可" ON reviews
   FOR DELETE
   USING (auth.uid() = user_id);
+
+-- ユーザーテーブルのポリシー
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- ユーザーの基本情報（名前）は誰でも閲覧可能
+CREATE POLICY "ユーザーの基本情報の閲覧を許可" ON users
+  FOR SELECT
+  USING (true);
+
+-- 認証済みユーザーの登録を許可
+CREATE POLICY "認証済みユーザーの登録を許可" ON users
+  FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- 自分のプロフィールのみ更新可能
+CREATE POLICY "自分のプロフィールの更新を許可" ON users
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- 自分のプロフィールのみ削除可能
+CREATE POLICY "自分のプロフィールの削除を許可" ON users
+  FOR DELETE
+  USING (auth.uid() = id);

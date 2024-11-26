@@ -41,3 +41,23 @@ CREATE TRIGGER update_projects_updated_at
     BEFORE UPDATE ON projects
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- 認証ユーザーの自動同期用トリガー関数
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.users (id, name, email)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'name', 'Anonymous'),
+        NEW.email
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- auth.usersテーブルの変更を監視するトリガー
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user();
