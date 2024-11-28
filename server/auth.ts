@@ -1,17 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
+import type { User } from "@db/schema";
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// .envファイルを読み込む（絶対パスで指定）
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase credentials are missing');
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-import { db } from "../db";
-import { users } from "@db/schema";
-import { eq } from "drizzle-orm";
-import type { User } from "@db/schema";
 
 export async function createUser(name: string, email: string, password: string): Promise<User> {
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -21,25 +27,29 @@ export async function createUser(name: string, email: string, password: string):
 
   if (authError) throw authError;
 
-  const [user] = await db
-    .insert(users)
-    .values({ 
+  const { data: user, error } = await supabase
+    .from('users')
+    .insert({ 
       id: authData.user?.id,
       name,
       email 
     })
-    .returning();
+    .select()
+    .single();
 
+  if (error) throw error;
   return user;
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const [user] = await db
+  const { data: user, error } = await supabase
+    .from('users')
     .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
-  return user || null;
+    .eq('email', email)
+    .single();
+
+  if (error) return null;
+  return user;
 }
 
 export async function verifyToken(token: string): Promise<User | null> {
@@ -47,11 +57,12 @@ export async function verifyToken(token: string): Promise<User | null> {
   
   if (!authUser) return null;
 
-  const [user] = await db
+  const { data: user, error } = await supabase
+    .from('users')
     .select()
-    .from(users)
-    .where(eq(users.id, authUser.id))
-    .limit(1);
+    .eq('id', authUser.id)
+    .single();
     
-  return user || null;
+  if (error) return null;
+  return user;
 }

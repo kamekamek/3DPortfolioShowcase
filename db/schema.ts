@@ -90,3 +90,21 @@ export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
+
+export const projectsWithUsers = pgTable("projects_with_users", {
+  id: uuid("id").primaryKey(),
+  userId: uuid("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  image: text("image").notNull(),
+  link: text("link"),
+  technologies: text("technologies").array().default([]),
+  position: text("position").notNull().default("[0,0,0]"),
+  rotation: text("rotation").notNull().default("[0,0,0]"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  creatorName: text("creator_name").notNull(),
+});
+
+export const selectProjectWithUserSchema = createSelectSchema(projectsWithUsers);
+export type ProjectWithUser = z.infer<typeof selectProjectWithUserSchema>;

@@ -1,5 +1,7 @@
+// 既存の型定義に追加
 export interface Project {
-  id: string;  // UUIDを使用するためstringに変更
+  id: string;
+  userId: string;
   title: string;
   description: string;
   image: string;
@@ -9,4 +11,9 @@ export interface Project {
   rotation: [number, number, number];
   createdAt: string;
   updatedAt: string;
+}
+
+// ProjectWithUser型を追加
+export interface ProjectWithUser extends Project {
+  creatorName: string;
 }
