@@ -1,107 +1,101 @@
--- 既存のポリシーを削除
-DROP POLICY IF EXISTS "プロジェクトの閲覧を許可" ON projects;
-DROP POLICY IF EXISTS "認証済みユーザーのプロジェクト作成を許可" ON projects;
-DROP POLICY IF EXISTS "プロジェクトの更新を許可" ON projects;
-DROP POLICY IF EXISTS "プロジェクトの削除を許可" ON projects;
-DROP POLICY IF EXISTS "レビューの閲覧を許可" ON reviews;
-DROP POLICY IF EXISTS "認証済みユーザーのレビュー作成を許可" ON reviews;
-DROP POLICY IF EXISTS "レビューの更新を許可" ON reviews;
-DROP POLICY IF EXISTS "レビューの削除を許可" ON reviews;
-DROP POLICY IF EXISTS "ユーザーの基本情報の閲覧を許可" ON users;
-DROP POLICY IF EXISTS "認証済みユーザーの登録を許可" ON users;
-DROP POLICY IF EXISTS "ユーザーの更新を許可" ON users;
-DROP POLICY IF EXISTS "ユーザーの削除を許可" ON users;
+-- ユーザーテーブルのポリシー
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "ユーザーは自分のデータのみ参照可能" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "ユーザーは自分のデータのみ更新可能" ON users
+  FOR UPDATE USING (auth.uid() = id);
 
 -- プロジェクトテーブルのポリシー
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
--- 誰でも閲覧可能
-CREATE POLICY "プロジェクトの閲覧を許可" ON projects
+CREATE POLICY "プロジェクトは誰でも閲覧可能" ON projects
   FOR SELECT USING (true);
 
--- 認証済みユーザーのみ作成可能
-CREATE POLICY "認証済みユーザーのプロジェクト作成を許可" ON projects
-  FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "認証済みユーザーのみプロジェクト作成可能" ON projects
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- 所有者のみ更新可能
-CREATE POLICY "プロジェクトの更新を許可" ON projects
-  FOR UPDATE
-  USING (auth.uid() = user_id);
+CREATE POLICY "プロジェクトは作成者または管理者のみ更新可能" ON projects
+  FOR UPDATE USING (
+    auth.uid() = user_id OR 
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND is_admin = true
+    )
+  );
 
--- 所有者のみ削除可能
-CREATE POLICY "プロジェクトの削除を許可" ON projects
-  FOR DELETE
-  USING (auth.uid() = user_id);
+CREATE POLICY "プロジェクトは作成者または管理者のみ削除可能" ON projects
+  FOR DELETE USING (
+    auth.uid() = user_id OR 
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND is_admin = true
+    )
+  );
 
 -- レビューテーブルのポリシー
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
--- 誰でも閲覧可能
-CREATE POLICY "レビューの閲覧を許可" ON reviews
+CREATE POLICY "レビューは誰でも閲覧可能" ON reviews
   FOR SELECT USING (true);
 
--- 認証済みユーザーのみ作成可能
-CREATE POLICY "認証済みユーザーのレビュー作成を許可" ON reviews
-  FOR INSERT
-  WITH CHECK (
-    auth.uid() IS NOT NULL AND
-    auth.uid() = user_id
-  );
+CREATE POLICY "認証済みユーザーのみレビュー作成可能" ON reviews
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- 管理者は全てのレビューを更新可能、一般ユーザーは自分のレビューのみ更新可能
-CREATE POLICY "レビューの更新を許可" ON reviews
-  FOR UPDATE
-  USING (
+CREATE POLICY "レビューは作成者または管理者のみ更新可能" ON reviews
+  FOR UPDATE USING (
+    auth.uid() = user_id OR 
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      (is_admin = true OR id = reviews.user_id)
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND is_admin = true
     )
   );
 
--- 管理者は全てのレビューを削除可能、一般ユーザーは自分のレビューのみ削除可能
-CREATE POLICY "レビューの削除を許可" ON reviews
-  FOR DELETE
-  USING (
+CREATE POLICY "レビューは作成者または管理者のみ削除可能" ON reviews
+  FOR DELETE USING (
+    auth.uid() = user_id OR 
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      (is_admin = true OR id = reviews.user_id)
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND is_admin = true
     )
   );
 
--- ユーザーテーブルのポリシー
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- プロジェクト一覧ビューのポリシー
+ALTER TABLE projects_with_users ENABLE ROW LEVEL SECURITY;
 
--- ユーザーの基本情報（名前）は誰でも閲覧可能
-CREATE POLICY "ユーザーの基本情報の閲覧を許可" ON users
-  FOR SELECT
-  USING (true);
+CREATE POLICY "プロジェクト一覧は誰でも閲覧可能" ON projects_with_users
+  FOR SELECT USING (true);
 
--- 認証済みユーザーの登録を許可
-CREATE POLICY "認証済みユーザーの登録を許可" ON users
-  FOR INSERT
-  WITH CHECK (auth.uid() = id);
+-- Storageのポリシー
+-- 画像のアップロード権限（認証済みユーザーのみ）
+CREATE POLICY "authenticated users can upload images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'portfolio' AND
+  (LOWER(RIGHT(name, 4)) = '.jpg' OR
+   LOWER(RIGHT(name, 4)) = '.png' OR
+   LOWER(RIGHT(name, 4)) = '.gif')
+);
 
--- 管理者は全てのユーザーを更新可能、一般ユーザーは自分のプロフィールのみ更新可能
-CREATE POLICY "ユーザーの更新を許可" ON users
-  FOR UPDATE
-  USING (
+-- 画像の読み取り権限（全ユーザー）
+CREATE POLICY "anyone can view images"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'portfolio');
+
+-- 画像の削除権限（所有者または管理者のみ）
+CREATE POLICY "owners or admins can delete images"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'portfolio' AND 
+  (
+    auth.uid()::text = (storage.foldername(name))[1] OR
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      (is_admin = true OR id = users.id)
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() AND is_admin = true
     )
-  );
-
--- 管理者のみユーザーの削除が可能
-CREATE POLICY "ユーザーの削除を許可" ON users
-  FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      is_admin = true
-    )
-  );
+  )
+);

@@ -21,7 +21,7 @@ import { Link, useLocation } from "wouter";
 import ProjectForm from "../components/ProjectForm";
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { data: projects = [] } = useProjects(user?.id);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
@@ -108,6 +108,11 @@ export default function Dashboard() {
     }
   };
 
+  // プロジェクトの編集・削除権限を確認する関数
+  const canEditProject = (projectUserId: string) => {
+    return isAdmin || projectUserId === user?.id;
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -119,6 +124,11 @@ export default function Dashboard() {
             </Button>
           </Link>
           <h1 className="text-3xl font-bold">プロジェクト管理</h1>
+          {isAdmin && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              管理者
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <Button onClick={() => setIsDialogOpen(true)}>
@@ -143,7 +153,7 @@ export default function Dashboard() {
                     {project.description}
                   </CardDescription>
                 </div>
-                {project.userId === user?.id && (
+                {canEditProject(project.userId) && (
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

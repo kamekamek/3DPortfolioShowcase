@@ -30,6 +30,14 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
 }
 
 function Router() {
+  const { session, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  // 初回読み込み時に認証状態をチェックし、未認証の場合は/authにリダイレクト
+  if (!loading && !session) {
+    navigate("/auth");
+  }
+
   return (
     <Switch>
       <Route path="/" component={Home} />

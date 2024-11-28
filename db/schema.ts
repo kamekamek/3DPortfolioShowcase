@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, varchar, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => {
   return {
@@ -33,11 +34,15 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
   return {
-    // RLSポリシー: 読み取りは全員可能、作成・更新・削除は所有者のみ
+    // RLSポリシー: 読み取りは全員可能、作成・更新・削除は所有者または管理者のみ
     rls_select: sql`true`,
     rls_insert: sql`auth.uid() = ${table.userId}`,
-    rls_update: sql`auth.uid() = ${table.userId}`,
-    rls_delete: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId} OR EXISTS (
+      SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true
+    )`,
+    rls_delete: sql`auth.uid() = ${table.userId} OR EXISTS (
+      SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true
+    )`,
   };
 });
 
@@ -50,11 +55,15 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => {
   return {
-    // RLSポリシー: 読み取りは全員可能、作成は認証済みユーザー、更新・削除は所有者のみ
+    // RLSポリシー: 読み取りは全員可能、作成は認証済みユーザー、更新・削除は所有者または管理者のみ
     rls_select: sql`true`,
     rls_insert: sql`auth.uid() = ${table.userId}`,
-    rls_update: sql`auth.uid() = ${table.userId}`,
-    rls_delete: sql`auth.uid() = ${table.userId}`,
+    rls_update: sql`auth.uid() = ${table.userId} OR EXISTS (
+      SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true
+    )`,
+    rls_delete: sql`auth.uid() = ${table.userId} OR EXISTS (
+      SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true
+    )`,
   };
 });
 
@@ -68,6 +77,7 @@ export type Review = z.infer<typeof selectReviewSchema>;
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email(),
   name: z.string().min(2),
+  isAdmin: z.boolean().default(false),
 });
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
