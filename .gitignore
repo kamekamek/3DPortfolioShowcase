@@ -1,3 +1,4 @@
+# Start of Selection
 node_modules
 dist
 .DS_Store
@@ -6,4 +7,6 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.local
+db/
 
+# End of Selection
