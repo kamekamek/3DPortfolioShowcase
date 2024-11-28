@@ -1,247 +1,94 @@
-main:
-  root:
-    .gitignore:
-      content: |-
-        Git管理除外設定
-        除外対象:
-        - node_modules
-        - dist
-        - .DS_Store
-        - server/public
-        - vite.config.ts.*
-        - *.tar.gz
-        - .env
-        - .env.local
-      dependency: []
-    .replit:
-      content: |-
-        Replit設定ファイル
-        設定:
-        - Node.js 20
-        - PostgreSQL 16
-        - Web
-        デプロイ:
-        - Cloud Run対応
-        - ポート5000使用
-      dependency: []
-    .env:
-      content: |-
-        環境変数設定
-        設定項目:
-        - VITE_SUPABASE_URL: Supabase プロジェクトURL
-        - VITE_SUPABASE_ANON_KEY: Supabase 匿名キー
-      dependency: []
-    client:
+name: 3DPortfolioShowcase
+type: project
+description: 3Dポートフォリオショーケース
+
+structure:
+  client:
+    description: フロントエンドアプリケーション
+    contents:
       src:
-        lib:
-          supabase.ts:
-            content: |-
-              Supabaseクライアント設定
-              外部依存:
-              - @supabase/supabase-js
-              機能:
-              - Supabaseクライアントの初期化
-              - 環境変数の読み込み
-            dependency: []
-          auth:
-            auth.ts:
-              content: |-
-                認証関連の処理
-                外部依存:
-                - @supabase/supabase-js
-                - zod
-                機能:
-                - ログイン/登録スキーマ定義
-                - ユーザー認証処理
-                - セッション管理
-              dependency:
-                - client/src/lib/supabase.ts
-          hooks:
-            useAuth.ts:
-              content: |-
-                認証関連のカスタムフック
-                外部依存:
-                - @supabase/supabase-js
-                - react
-                機能:
-                - 認証状態の管理
-                - ログイン/登録/ログアウト処理
-              dependency:
-                - client/src/lib/auth/auth.ts
-            useProjects.ts:
-              content: |-
-                プロジェクト関連のカスタムフック
-                外部依存:
-                - @supabase/supabase-js
-                - @tanstack/react-query
-                機能:
-                - プロジェクトのCRUD操作
-              dependency:
-                - client/src/lib/supabase.ts
-            useReviews.ts:
-              content: |-
-                レビュー関連のカスタムフック
-                外部依存:
-                - @supabase/supabase-js
-                - @tanstack/react-query
-                機能:
-                - レビューのCRUD操作
-              dependency:
-                - client/src/lib/supabase.ts
         components:
+          files:
+            - DialogContainer.tsx
+            - Navigation.tsx
+            - ProjectDialog.tsx
+            - ProjectForm.tsx
+            - ReviewForm.tsx
+            - ReviewList.tsx
           auth:
-            LoginForm.tsx:
-              content: |-
-                ログインフォームコンポーネント
-                外部依存:
-                - react-hook-form
-                - @hookform/resolvers/zod
-                機能:
-                - ログインフォームの表示
-                - バリデーション
-                - ログイン処理
-                - パスワード表示/非表示機能
-              dependency:
-                - client/src/lib/auth/auth.ts
-                - client/src/hooks/useAuth.ts
-            RegisterForm.tsx:
-              content: |-
-                登録フォームコンポーネント
-                外部依存:
-                - react-hook-form
-                - @hookform/resolvers/zod
-                機能:
-                - 登録フォームの表示
-                - バリデーション
-                - ユーザー登録処理
-                - パスワード表示/非表示機能
-              dependency:
-                - client/src/lib/auth/auth.ts
-                - client/src/hooks/useAuth.ts
-          DialogContainer.tsx:
-            content: |-
-              ダイアログコンテナコンポーネント
-              外部依存:
-              - react
-              - @radix-ui/react-dialog
-              機能:
-              - プロジェクトの詳細表示
-              - 選択されたプロジェクトの管理
-            dependency:
-              - client/src/lib/hooks/useProject.ts
-          ProjectDialog.tsx:
-            content: |-
-              プロジェクトダイアログコンポーネント
-              外部依存:
-              - react
-              - @radix-ui/react-dialog
-              - recharts
-              機能:
-              - プロジェクトの詳細表示
-              - レビューの表示
-            dependency:
-              - client/src/lib/hooks/useReviews.ts
-          ProjectForm.tsx:
-            content: |-
-              プロジェクトフォームコンポーネント
-              外部依存:
-              - react-hook-form
-              - @hookform/resolvers/zod
-              機能:
-              - プロジェクトの作成/編集
-            dependency:
-              - client/src/lib/hooks/useProjects.ts
-          ReviewForm.tsx:
-            content: |-
-              レビュー投稿フォームコンポーネント
-              外部依存:
-              - react
-              - @supabase/supabase-js
-              機能:
-              - レビューの投稿
-            dependency:
-              - client/src/lib/hooks/useReviews.ts
-          ReviewList.tsx:
-            content: |-
-              レビュー一覧表示コンポーネント
-              外部依存:
-              - react
-              機能:
-              - レビューの表示
-            dependency:
-              - client/src/lib/hooks/useReviews.ts
+            files:
+              - LoginForm.tsx
+              - RegisterForm.tsx
+          scene:
+            files:
+              - ProjectCard.tsx
+              - Scene.tsx
+          ui:
+            description: UIコンポーネント群
+        lib:
+          hooks:
+            files:
+              - useProject.ts
+              - useProjects.ts
+              - useReviews.ts
+              - useUploadImage.ts
+          auth:
+            files:
+              - auth.ts
+          files:
+            - queryClient.ts
+            - store.ts
+            - supabase.ts
+            - types.ts
+            - utils.ts
         pages:
-          auth.tsx:
-            content: |-
-              認証ページ
-              機能:
-              - ログイン/登録フォームの切り替え
-              - 認証状態に基づくリダイレクト
-            dependency:
-              - client/src/components/auth/LoginForm.tsx
-              - client/src/components/auth/RegisterForm.tsx
-              - client/src/hooks/useAuth.ts
-          dashboard.tsx:
-            content: |-
-              ダッシュボードページ
-              機能:
-              - プロジェクトの管理
-              - レビューの管理
-            dependency:
-              - client/src/components/ProjectDialog.tsx
-              - client/src/components/ReviewList.tsx
-          Home.tsx:
-            content: |-
-              ホームページ
-              機能:
-              - プロジェクトの一覧表示
-            dependency:
-              - client/src/components/ProjectCard.tsx
-              - client/src/hooks/useProjects.ts
-          # ... (既存のページ定義は変更なし)
-    server:
-      auth.ts:
-        content: |-
-          認証関連の処理
-          外部依存:
-          - @supabase/supabase-js
-          - dotenv
-          機能:
-          - ユーザー登録
-          - ログイン認証
-          - トークン検証
-        dependency:
-          - server/db/index.ts
-      routes.ts:
-        content: |-
-          APIルート定義
-          外部依存:
-          - express
-          - @supabase/supabase-js
-          - dotenv
-          機能:
-          - 認証エンドポイント
-          - プロジェクト操作API
-          - レビュー操作API
-        dependency:
-          - server/auth.ts
-          - server/db/index.ts
-    db:
-      schema.sql:
-        content: |-
-          データベーススキーマ定義
-          テーブル:
-          - users (id, name, email, created_at)
-          - projects (id, user_id, title, description, image, link, technologies, created_at)
-          - reviews (id, project_id, user_id, rating, comment, created_at)
-        dependency: []
-      index.ts:
-        content: |-
-          データベース接続設定
-          外部依存:
-          - @supabase/supabase-js
-          - dotenv
-          機能:
-          - Supabaseクライアントの初期化
-          - データベース操作のエクスポート
-        dependency: []
+          files:
+            - Home.tsx
+            - auth.tsx
+            - dashboard.tsx
+        files:
+          - index.css
+          - main.tsx
+      files:
+        - index.html
+  db:
+    files:
+      - index.ts
+      - policies.sql
+      - schema.sql
+      - schema.ts
+  migrations:
+    description: データベースマイグレーションファイル
+  scripts:
+    files:
+      - insert-sample-projects.ts
+  server:
+    files:
+      - auth.ts
+      - index.ts
+      - routes.ts
+      - vite.ts
+  root_files:
+    - .env
+    - .gitignore
+    - drizzle.config.ts
+    - package.json
+    - postcss.config.js
+    - tailwind.config.ts
+    - tsconfig.json
+    - vite.config.ts
+
+features:
+  - 3Dシーンでのプロジェクト表示
+  - プロジェクトの追加・編集
+  - プロジェクトへのレビュー機能
+  - ユーザー認証
+  - 画像アップロード機能
+
+tech_stack:
+  - React
+  - TypeScript
+  - Three.js
+  - Supabase
+  - Tailwind CSS
+  - Vite
