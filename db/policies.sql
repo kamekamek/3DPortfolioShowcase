@@ -22,32 +22,17 @@ CREATE POLICY "プロジェクトの閲覧を許可" ON projects
 -- 認証済みユーザーのみ作成可能
 CREATE POLICY "認証済みユーザーのプロジェクト作成を許可" ON projects
   FOR INSERT
-  WITH CHECK (
-    auth.uid() IS NOT NULL AND
-    auth.uid() = user_id
-  );
+  WITH CHECK (auth.uid() IS NOT NULL);
 
--- 管理者は全てのプロジェクトを更新可能、一般ユーザーは自分のプロジェクトのみ更新可能
+-- 所有者のみ更新可能
 CREATE POLICY "プロジェクトの更新を許可" ON projects
   FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      (is_admin = true OR id = projects.user_id)
-    )
-  );
+  USING (auth.uid() = user_id);
 
--- 管理者は全てのプロジェクトを削除可能、一般ユーザーは自分のプロジェクトのみ削除可能
+-- 所有者のみ削除可能
 CREATE POLICY "プロジェクトの削除を許可" ON projects
   FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE id = auth.uid() AND
-      (is_admin = true OR id = projects.user_id)
-    )
-  );
+  USING (auth.uid() = user_id);
 
 -- レビューテーブルのポリシー
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "../lib/hooks/useProjects";
 import { useToast } from "../hooks/use-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -19,7 +19,6 @@ import {
 import { ArrowLeft, Plus, Edit, Trash, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import ProjectForm from "../components/ProjectForm";
-import { supabase } from "../lib/supabase";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -31,18 +30,6 @@ export default function Dashboard() {
   const [editingProject, setEditingProject] = useState<any>(null);
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [editPermissions, setEditPermissions] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const checkPermissions = async () => {
-      const permissions: Record<string, boolean> = {};
-      for (const project of projects) {
-        permissions[project.id] = await canEditProject(project.userId);
-      }
-      setEditPermissions(permissions);
-    };
-    checkPermissions();
-  }, [projects]);
 
   const handleSubmit = async (data: any) => {
     try {
@@ -50,9 +37,12 @@ export default function Dashboard() {
         await updateProject.mutateAsync({
           id: editingProject.id,
           data: {
-            ...data,
-            technologies: Array.isArray(data.technologies) 
-              ? data.technologies 
+            title: data.title,
+            description: data.description,
+            image: data.image,
+            link: data.link,
+            technologies: Array.isArray(data.technologies)
+              ? data.technologies
               : data.technologies.split(",").map((t: string) => t.trim()).filter(Boolean),
           },
         });
@@ -62,11 +52,16 @@ export default function Dashboard() {
         });
       } else {
         await createProject.mutateAsync({
-          ...data,
-          user_id: user?.id,
+          userId: user?.id as string,
+          title: data.title,
+          description: data.description,
+          image: data.image,
+          link: data.link,
           technologies: Array.isArray(data.technologies)
             ? data.technologies
             : data.technologies.split(",").map((t: string) => t.trim()).filter(Boolean),
+          position: [0, 0, 0],
+          rotation: [0, 0, 0],
         });
         toast({
           title: "作成完了",
@@ -97,18 +92,20 @@ export default function Dashboard() {
     }
   };
 
-  const canEditProject = async (projectUserId: string) => {
-    if (!user) return false;
-
-    const { data: userData, error } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
-
-    if (error) return false;
-    
-    return userData.is_admin || projectUserId === user.id;
+  const handleDelete = async (projectId: string) => {
+    try {
+      await deleteProject.mutateAsync(projectId);
+      toast({
+        title: "削除完了",
+        description: "プロジェクトが削除されました",
+      });
+    } catch (error: any) {
+      toast({
+        title: "エラー",
+        description: error.message || "削除に失敗しました",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -146,7 +143,7 @@ export default function Dashboard() {
                     {project.description}
                   </CardDescription>
                 </div>
-                {editPermissions[project.id] && (
+                {project.userId === user?.id && (
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -163,7 +160,7 @@ export default function Dashboard() {
                       size="icon"
                       onClick={() => {
                         if (confirm("このプロジェクトを削除してもよろしいですか？")) {
-                          deleteProject.mutate(project.id);
+                          handleDelete(project.id);
                         }
                       }}
                     >

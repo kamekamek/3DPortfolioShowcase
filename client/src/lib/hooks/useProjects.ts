@@ -2,45 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
 import type { Project, ProjectWithUser } from "../types";
 
-export function useProjects(userId?: string, isAdmin?: boolean) {
+export function useProjects(userId?: string) {
   return useQuery({
-    queryKey: ["projects", userId, isAdmin],
+    queryKey: ["projects", userId],
     queryFn: async () => {
-      // まず、現在のユーザーの管理者権限を確認
-      if (userId) {
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("is_admin")
-          .eq("id", userId)
-          .single();
-
-        if (userError) throw userError;
-
-        // ユーザーが管理者の場合は全てのプロジェクトを取得
-        const query = supabase
-          .from("projects_with_users")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        // 管理者でない場合は、自分のプロジェクトのみを取得
-        if (!userData.is_admin) {
-          query.eq("user_id", userId);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        return data.map((project: any) => ({
-          ...project,
-          position: project.position || [0, 0, 0],
-          rotation: project.rotation || [0, 0, 0],
-          createdAt: project.created_at,
-          updatedAt: project.updated_at,
-          creatorName: project.creator_name,
-        })) as ProjectWithUser[];
-      }
-
-      // userIdがない場合は全てのプロジェクトを取得（ホーム画面用）
       const { data, error } = await supabase
         .from("projects_with_users")
         .select("*")
@@ -50,6 +15,7 @@ export function useProjects(userId?: string, isAdmin?: boolean) {
 
       return data.map((project: any) => ({
         ...project,
+        userId: project.user_id,
         position: project.position || [0, 0, 0],
         rotation: project.rotation || [0, 0, 0],
         createdAt: project.created_at,
@@ -65,14 +31,18 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
-      // 現在のユーザーのIDを取得
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("ユーザーが認証されていません");
 
-      // データベースのカラム名に合わせてデータを変換
       const dbData = {
-        ...data,
         user_id: user.id,
+        title: data.title,
+        description: data.description,
+        image: data.image,
+        link: data.link,
+        technologies: data.technologies,
+        position: data.position,
+        rotation: data.rotation,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -85,7 +55,6 @@ export function useCreateProject() {
 
       if (error) throw error;
 
-      // projects_with_usersビューから最新のデータを取得
       const { data: projectWithUser, error: viewError } = await supabase
         .from("projects_with_users")
         .select("*")
@@ -94,9 +63,9 @@ export function useCreateProject() {
 
       if (viewError) throw viewError;
 
-      // レスポンスをTypeScriptの型に合わせて変換
       return {
         ...projectWithUser,
+        userId: projectWithUser.user_id,
         createdAt: projectWithUser.created_at,
         updatedAt: projectWithUser.updated_at,
         creatorName: projectWithUser.creator_name,
@@ -119,36 +88,15 @@ export function useUpdateProject() {
       id: string;
       data: Partial<Omit<Project, "id" | "createdAt" | "updatedAt">>;
     }) => {
-      // 現在のユーザーの権限を確認
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("認証が必要です");
 
-      // ユーザーの管理者権限を確認
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-      if (userError) throw userError;
-
-      // プロジェクトの所有者を確認
-      const { data: project, error: projectError } = await supabase
-        .from("projects")
-        .select("user_id")
-        .eq("id", id)
-        .single();
-
-      if (projectError) throw projectError;
-
-      // 管理者または所有者でない場合はエラー
-      if (!userData.is_admin && project.user_id !== user.id) {
-        throw new Error("このプロジェクトを編集する権限がありません");
-      }
-
-      // 更新処理
       const dbData = {
-        ...data,
+        title: data.title,
+        description: data.description,
+        image: data.image,
+        link: data.link,
+        technologies: data.technologies,
         updated_at: new Date().toISOString(),
       };
 
@@ -156,12 +104,21 @@ export function useUpdateProject() {
         .from("projects")
         .update(dbData)
         .eq("id", id)
+        .eq("user_id", user.id) // 所有者チェックを追加
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw new Error("プロジェクトの更新に失敗しました");
+      }
 
-      return updatedProject;
+      return {
+        ...updatedProject,
+        userId: updatedProject.user_id,
+        createdAt: updatedProject.created_at,
+        updatedAt: updatedProject.updated_at,
+      } as Project;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -174,35 +131,19 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // 現在のユーザーの権限を確認
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("認証が必要です");
 
-      // ユーザーの管理者権限を確認
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-      if (userError) throw userError;
-
-      // プロジェクトの所有者を確認
-      const { data: project, error: projectError } = await supabase
+      const { error } = await supabase
         .from("projects")
-        .select("user_id")
+        .delete()
         .eq("id", id)
-        .single();
+        .eq("user_id", user.id); // 所有者チェックを追加
 
-      if (projectError) throw projectError;
-
-      // 管理者または所有者でない場合はエラー
-      if (!userData.is_admin && project.user_id !== user.id) {
-        throw new Error("このプロジェクトを削除する権限がありません");
+      if (error) {
+        console.error("Delete error:", error);
+        throw new Error("プロジェクトの削除に失敗しました");
       }
-
-      const { error } = await supabase.from("projects").delete().eq("id", id);
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -236,7 +177,6 @@ export function useUpdateProjectTransform() {
 
       if (error) throw error;
 
-      // projects_with_usersビューから最新のデータを取得
       const { data: projectWithUser, error: viewError } = await supabase
         .from("projects_with_users")
         .select("*")
@@ -247,6 +187,7 @@ export function useUpdateProjectTransform() {
 
       return {
         ...projectWithUser,
+        userId: projectWithUser.user_id,
         createdAt: projectWithUser.created_at,
         updatedAt: projectWithUser.updated_at,
       } as Project;
