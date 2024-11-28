@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "../lib/hooks/useProjects";
 import { useToast } from "../hooks/use-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -19,17 +19,30 @@ import {
 import { ArrowLeft, Plus, Edit, Trash, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import ProjectForm from "../components/ProjectForm";
+import { supabase } from "../lib/supabase";
 
 export default function Dashboard() {
-  const { data: projects = [] } = useProjects();
+  const { user, logout } = useAuth();
+  const { data: projects = [] } = useProjects(user?.id);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
   const { toast } = useToast();
-  const { user, logout } = useAuth();
   const [, navigate] = useLocation();
+  const [editPermissions, setEditPermissions] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const permissions: Record<string, boolean> = {};
+      for (const project of projects) {
+        permissions[project.id] = await canEditProject(project.userId);
+      }
+      setEditPermissions(permissions);
+    };
+    checkPermissions();
+  }, [projects]);
 
   const handleSubmit = async (data: any) => {
     try {
@@ -84,6 +97,20 @@ export default function Dashboard() {
     }
   };
 
+  const canEditProject = async (projectUserId: string) => {
+    if (!user) return false;
+
+    const { data: userData, error } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (error) return false;
+    
+    return userData.is_admin || projectUserId === user.id;
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -119,29 +146,31 @@ export default function Dashboard() {
                     {project.description}
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      setEditingProject(project);
-                      setIsDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm("このプロジェクトを削除してもよろしいですか？")) {
-                        deleteProject.mutate(project.id);
-                      }
-                    }}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+                {editPermissions[project.id] && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setEditingProject(project);
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm("このプロジェクトを削除してもよろしいですか？")) {
+                          deleteProject.mutate(project.id);
+                        }
+                      }}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent>
