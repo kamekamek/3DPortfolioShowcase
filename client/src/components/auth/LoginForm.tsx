@@ -14,11 +14,13 @@ import {
 import { Input } from "../ui/input";
 import { useToast } from "../../hooks/use-toast";
 import { useLocation } from "wouter";
+import { useState } from "react";
 
 export default function LoginForm() {
   const { login } = useAuth();
   const { toast } = useToast();
   const [_, navigate] = useLocation();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -46,6 +48,10 @@ export default function LoginForm() {
         variant: "destructive",
       });
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -77,12 +83,15 @@ export default function LoginForm() {
               <FormLabel>パスワード</FormLabel>
               <FormControl>
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   {...field}
                 />
               </FormControl>
               <FormMessage />
+              <button type="button" onClick={togglePasswordVisibility}>
+                {showPassword ? "非表示" : "表示"}
+              </button>
             </FormItem>
           )}
         />

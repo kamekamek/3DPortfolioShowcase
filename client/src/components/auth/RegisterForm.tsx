@@ -13,6 +13,7 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { useToast } from "../../hooks/use-toast";
+import { useState } from "react";
 
 export default function RegisterForm() {
   const { register } = useAuth();
@@ -26,6 +27,12 @@ export default function RegisterForm() {
       password: "",
     },
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   const onSubmit = async (data: RegisterInput) => {
     try {
@@ -92,12 +99,15 @@ export default function RegisterForm() {
               <FormLabel>パスワード</FormLabel>
               <FormControl>
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   {...field}
                 />
               </FormControl>
               <FormMessage />
+              <button type="button" onClick={togglePasswordVisibility}>
+                {showPassword ? "非表示" : "表示"}
+              </button>
             </FormItem>
           )}
         />
