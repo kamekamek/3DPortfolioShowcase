@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase";
-import type { Project } from "../types";
+import type { Project, ProjectWithUser } from "../types";
 
 export function useProjects() {
   return useQuery({
@@ -20,7 +20,8 @@ export function useProjects() {
         rotation: project.rotation || [0, 0, 0],
         createdAt: project.created_at,
         updatedAt: project.updated_at,
-      })) as Project[];
+        creatorName: project.creator_name,
+      })) as ProjectWithUser[];
     },
   });
 }
@@ -29,7 +30,7 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt" | "creator_name">) => {
+    mutationFn: async (data: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
       // 現在のユーザーのIDを取得
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("ユーザーが認証されていません");
@@ -37,7 +38,7 @@ export function useCreateProject() {
       // データベースのカラム名に合わせてデータを変換
       const dbData = {
         ...data,
-        user_id: user.id,  // user_idを設定
+        user_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -64,7 +65,8 @@ export function useCreateProject() {
         ...projectWithUser,
         createdAt: projectWithUser.created_at,
         updatedAt: projectWithUser.updated_at,
-      } as Project;
+        creatorName: projectWithUser.creator_name,
+      } as ProjectWithUser;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -81,7 +83,7 @@ export function useUpdateProject() {
       data,
     }: {
       id: string;
-      data: Partial<Omit<Project, "id" | "createdAt" | "updatedAt" | "creator_name">>;
+      data: Partial<Omit<Project, "id" | "createdAt" | "updatedAt">>;
     }) => {
       // データベースのカラム名に合わせてデータを変換
       const dbData = {
@@ -112,7 +114,8 @@ export function useUpdateProject() {
         ...projectWithUser,
         createdAt: projectWithUser.created_at,
         updatedAt: projectWithUser.updated_at,
-      } as Project;
+        creatorName: projectWithUser.creator_name,
+      } as ProjectWithUser;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });

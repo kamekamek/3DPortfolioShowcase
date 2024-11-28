@@ -113,7 +113,11 @@ export default function Dashboard() {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle>{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
+                  <CardDescription>
+                    作成者: {project.creatorName}
+                    <br />
+                    {project.description}
+                  </CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -147,7 +151,7 @@ export default function Dashboard() {
                 className="w-full aspect-video object-cover rounded-lg mb-4"
               />
               <div className="flex flex-wrap gap-2">
-                {project.technologies.map((tech) => (
+                {project.technologies.map((tech: string) => (
                   <span
                     key={tech}
                     className="px-2 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
