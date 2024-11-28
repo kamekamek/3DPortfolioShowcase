@@ -13,10 +13,12 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { useToast } from "../../hooks/use-toast";
+import { useLocation } from "wouter";
 
 export default function LoginForm() {
   const { login } = useAuth();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -34,8 +36,9 @@ export default function LoginForm() {
       }
       toast({
         title: "ログイン成功",
-        description: "ダッシュボードにリダイレクトします",
+        description: "ホーム画面にリダイレクトします",
       });
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "エラー",
