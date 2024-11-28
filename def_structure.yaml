@@ -8,8 +8,10 @@ main:
         - dist
         - .DS_Store
         - server/public
-        - vite config
-        - env files
+        - vite.config.ts.*
+        - *.tar.gz
+        - .env
+        - .env.local
       dependency: []
     .replit:
       content: |-
@@ -98,6 +100,7 @@ main:
                 - ログインフォームの表示
                 - バリデーション
                 - ログイン処理
+                - パスワード表示/非表示機能
               dependency:
                 - client/src/lib/auth/auth.ts
                 - client/src/hooks/useAuth.ts
@@ -111,9 +114,62 @@ main:
                 - 登録フォームの表示
                 - バリデーション
                 - ユーザー登録処理
+                - パスワード表示/非表示機能
               dependency:
                 - client/src/lib/auth/auth.ts
                 - client/src/hooks/useAuth.ts
+          DialogContainer.tsx:
+            content: |-
+              ダイアログコンテナコンポーネント
+              外部依存:
+              - react
+              - @radix-ui/react-dialog
+              機能:
+              - プロジェクトの詳細表示
+              - 選択されたプロジェクトの管理
+            dependency:
+              - client/src/lib/hooks/useProject.ts
+          ProjectDialog.tsx:
+            content: |-
+              プロジェクトダイアログコンポーネント
+              外部依存:
+              - react
+              - @radix-ui/react-dialog
+              - recharts
+              機能:
+              - プロジェクトの詳細表示
+              - レビューの表示
+            dependency:
+              - client/src/lib/hooks/useReviews.ts
+          ProjectForm.tsx:
+            content: |-
+              プロジェクトフォームコンポーネント
+              外部依存:
+              - react-hook-form
+              - @hookform/resolvers/zod
+              機能:
+              - プロジェクトの作成/編集
+            dependency:
+              - client/src/lib/hooks/useProjects.ts
+          ReviewForm.tsx:
+            content: |-
+              レビュー投稿フォームコンポーネント
+              外部依存:
+              - react
+              - @supabase/supabase-js
+              機能:
+              - レビューの投稿
+            dependency:
+              - client/src/lib/hooks/useReviews.ts
+          ReviewList.tsx:
+            content: |-
+              レビュー一覧表示コンポーネント
+              外部依存:
+              - react
+              機能:
+              - レビューの表示
+            dependency:
+              - client/src/lib/hooks/useReviews.ts
         pages:
           auth.tsx:
             content: |-
@@ -125,6 +181,23 @@ main:
               - client/src/components/auth/LoginForm.tsx
               - client/src/components/auth/RegisterForm.tsx
               - client/src/hooks/useAuth.ts
+          dashboard.tsx:
+            content: |-
+              ダッシュボードページ
+              機能:
+              - プロジェクトの管理
+              - レビューの管理
+            dependency:
+              - client/src/components/ProjectDialog.tsx
+              - client/src/components/ReviewList.tsx
+          Home.tsx:
+            content: |-
+              ホームページ
+              機能:
+              - プロジェクトの一覧表示
+            dependency:
+              - client/src/components/ProjectCard.tsx
+              - client/src/hooks/useProjects.ts
           # ... (既存のページ定義は変更なし)
     server:
       auth.ts:
